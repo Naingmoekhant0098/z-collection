@@ -29,8 +29,15 @@ export const useBaseService = (type) => {
     getById: (id) => handleRequest(api.get(`/${type}/${id}`), "Get failed"),
 
     create: (data) =>
-      handleRequest(api.post(`/${type}`, data), "Create failed"),
+      handleRequest(api.post(`/${type}`, data,{
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },  
+      }), "Create failed"),
 
+      createTwo: (data) =>
+        handleRequest(api.post(`/${type}`, data,{
+        }), "Create failed"),
     updateById: (id, data) =>
       handleRequest(api.patch(`/${type}/${id}`, data), "Update failed"),
 

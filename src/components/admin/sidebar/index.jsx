@@ -21,11 +21,10 @@ import { LogoutConfirmation } from "../Dialogs/logout/index";
 import { Sheet, SheetContent, SheetTrigger } from "../../ui/sheet";
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: LayoutList, label: "Posts", path: "/posts" },
-  { icon: Users, label: "Users", path: "/users" },
-  { icon: BadgeDollarSign, label: "Advertisements", path: "/advertisements" },
-  { icon: BellRing, label: "Send Notifications", path: "/send-notification" },
-  { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: LayoutList, label: "Products", path: "/admin/products" },
+  { icon: LayoutList, label: "Categories", path: "/admin/categories" },
+  { icon: LayoutList, label: "Orders", path: "/admin/orders" },
+  { icon: Users, label: "Customers", path: "/admin/customers" },
 ];
 
 export function Sidebar() {
@@ -45,11 +44,11 @@ export function Sidebar() {
             className="w-14 h-14 aspect-square object-cover"
             alt="Logo"
           />
-          <div className="font-semibold text-lg">Go Live Admin</div>
+          <div className="font-semibold text-lg">Z Collection</div>
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
         {sidebarItems.map((item) => (
           <Button
             onClick={() => {
@@ -59,9 +58,9 @@ export function Sidebar() {
             key={item.label}
             variant={location.pathname === item.path ? "default" : "ghost"}
             className={cn(
-              "w-full justify-start gap-3 h-12 text-[15px]",
+              "w-full justify-start  gap-3 h-10 text-[14px] py-2!",
               location.pathname === item.path
-                ? "bg-black text-white hover:bg-main/90"
+                ? "bg-main text-white hover:bg-main/90"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             )}
           >
@@ -75,7 +74,7 @@ export function Sidebar() {
         <Button
           onClick={() => setIsOpen(true)}
           variant="ghost"
-          className="w-full justify-start gap-3 h-12 text-[15px] text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+          className="w-full justify-start gap-2! h-12 text-[14px] text-gray-600 hover:text-gray-900 hover:bg-gray-100"
         >
           <LogOut className="w-5 h-5" />
           Sign Out

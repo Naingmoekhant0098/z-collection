@@ -10,7 +10,7 @@ import {
 } from "../../../ui/dialog";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Textarea } from "@/components/ui/textarea"
+import { Textarea } from "@/components/ui/textarea";
 import {
   Loader2,
   Percent,
@@ -46,11 +46,11 @@ export function PlatformFeeCreate({
   const handleSave = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     if (
       !formData?.platform ||
       !formData?.platform_fee ||
-      !formData?.platform_description 
+      !formData?.platform_description
     ) {
       customToast.error("Error", "Please fill all required fields!");
       setIsLoading(false);
@@ -110,17 +110,13 @@ export function PlatformFeeCreate({
                 Platform Description
               </Label>
               <div className="relative">
-               
                 <Textarea
-                
                   name="platform_description"
                   type="number"
                   placeholder="Write Something"
                   value={formData?.platform_description || ""}
                   onChange={handleInputChange}
-                  
                   className=" text-base border-gray-200 rounded-xl"
-                  
                 />
               </div>
             </div>

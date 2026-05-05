@@ -1,15 +1,14 @@
  
  
-import { PostTable } from "../../components/admin/posts";
+import { ProductTable } from "../../components/admin/products/index";
  
 export default function Posts() {
   return (
-    
-    <main className="flex-1 overflow-y-auto ">
-        <div className=" space-y-3 md:space-y-6">
-          <PostTable />
+    <div className="overflow-y-auto w-full ">
+        <div className=" w-full space-y-3 md:space-y-6">
+          <ProductTable />
         </div>
-      </main>
+      </div>
     
   );
 }

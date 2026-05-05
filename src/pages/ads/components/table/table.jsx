@@ -43,7 +43,7 @@ import {
 import { cn } from "@/lib/utils";
 import CustomPagination from "../../../../components/pagination/pagination";
 import customToast from "../../../../components/customToast";
-import { BannerService } from "../../../../services/BannerService";
+
 import { Form } from "../form/form";
 
 export function AdsTable() {
@@ -59,27 +59,7 @@ export function AdsTable() {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState("create");
   const [selectedPost, setSelectedPost] = useState(null);
-
-  const fetchAds = async () => {
-    setIsLoading(true);
-    try {
-      const response = await BannerService().fetchAll({
-        page,
-        per_page,
-        search: searchText,
-        order: Order,
-      });
-
-      if (response?.status) {
-        setAds(response.data?.data || response.data || []);
-        setTotalPage(response.data?.pagination?.totalPages || 1);
-      }
-    } catch (error) {
-      customToast.error("Error", "Failed to load banners");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+ 
 
   const handleSubmit = async (formData) => {
     try {

@@ -15,7 +15,7 @@ import logo from "@/assets/images/logo2.png";
 import { Eye, EyeOff, Loader2, Lock, Phone } from "lucide-react";
 import customToast from "../../components/ui/customToaster";
 import AuthService from "../../services/AuthService";
- 
+
 export function AdminLogin() {
   const [formData, setFormData] = useState({
     email: "",
@@ -54,13 +54,10 @@ export function AdminLogin() {
         if (response?.status && response?.statusCode == 200) {
           customToast.success("Congratulation", response.data.message);
           Cookies.set("token", response.data.token);
-          // sessionStorage.setItem("token",(response.data.data.token));
           setIsLoading(false);
           navigate("/");
         }
       } catch (error) {}
-
-      // navigate("/admin/dashboard")
     } catch (error) {
       console.error("Login failed", error);
       customToast.error("Login Failed", "Something went wrong");
@@ -70,20 +67,27 @@ export function AdminLogin() {
   };
 
   return (
-    <div className=" h-screen min-w-full flex flex-col justify-center items-center   bg-gradient-to-br bg-slate-50 relative">
+    <div
+      className="min-h-[100dvh] w-full flex flex-col items-center
+  bg-gradient-to-br from-pink-200 via-pink-50 to-purple-200
+  relative"
+    >
       <div className="absolute inset-0 bg-black/10"></div>
 
-      <div className="relative z-10 w-full max-w-sm">
-        <Card className="w-full shadow-none backdrop-blur-none  bg-main border-0">
+      <div className="relative z-10  w-full md:max-w-sm">
+        <div className="w-full  mt-12 shadow-none backdrop-blur-none   border-0">
           <CardContent>
             <img
               src={logo || "/placeholder.svg"}
-              className="w-26 h-26 -mt-4 aspect-square object-cover mx-auto"
+              className="w-34  mb-2 aspect-square object-cover mx-auto"
               alt="Logo"
             />
-            <CardTitle className="text-xl text-center mb-6">
-              Go Live Admin
+            <CardTitle className="text-xl text-center mb-2">
+              Welcome Back Zu 👋
             </CardTitle>
+            <p className="text-sm text-center text-gray-500 mb-4">
+              Log in to manage your dashboard and stay in control
+            </p>
             <form
               className="mt-4 space-y-4"
               onSubmit={(e) => e.preventDefault()}
@@ -91,7 +95,7 @@ export function AdminLogin() {
               <div className="space-y-2">
                 <Label
                   htmlFor="Email"
-                  className="text-sm font-semibold text-gray-900 opacity-70"
+                  className="text-sm font-medium text-gray-900 opacity-70"
                 >
                   Email Address
                 </Label>
@@ -105,7 +109,7 @@ export function AdminLogin() {
                     placeholder="Ex: JohnDoe@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-12 h-12 text-[13px] border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-xl bg-white shadow-sm transition-all duration-200 hover:shadow-md"
+                    className="pl-12 pr-12 h-12 text-base md:text-[14px] border-pink-300 focus:border-pink-500 bg-white focus:ring-pink-500/20 rounded-xl  shadow-none transition-all duration-200 hover:shadow-md  hover:shadow-pink-300/50"
                     required
                   />
                 </div>
@@ -114,7 +118,7 @@ export function AdminLogin() {
               <div className="space-y-2">
                 <Label
                   htmlFor="password"
-                  className="text-sm font-semibold text-gray-900 opacity-70"
+                  className="text-sm font-medium text-gray-900 opacity-70"
                 >
                   Password
                 </Label>
@@ -128,7 +132,7 @@ export function AdminLogin() {
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="pl-12 pr-12 h-12 text-[13px] border-gray-200 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-xl bg-white shadow-sm transition-all duration-200 hover:shadow-md"
+                    className="pl-12 pr-12 h-12 text-base md:text-[14px] border-pink-300 focus:border-pink-500 bg-white focus:ring-pink-500/20 rounded-xl  shadow-none transition-all duration-200 hover:shadow-md  hover:shadow-pink-300/50"
                     required
                   />
                   <button
@@ -151,13 +155,13 @@ export function AdminLogin() {
             <Button
               type="submit"
               onClick={handleLogin}
-              className="w-full  text-[14px] bg-black cursor-pointer   border  hover:text-black hover:border-black hover:bg-white  h-14  font-medium rounded-xl shadow-lg     transition-all duration-300 group transform"
+              className="w-full  text-[14px] bg-pink-400 cursor-pointer   border border-pink-500  hover:text-pink-400 hover:border-pink-600 hover:bg-white  h-12 mt-6 rounded-xl shadow-lg     transition-all duration-300 group transform"
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="animate-spin" /> : <>Log In</>}
             </Button>
           </CardFooter>
-        </Card>
+        </div>
       </div>
     </div>
   );

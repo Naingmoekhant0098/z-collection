@@ -1,43 +1,85 @@
- 
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import { OrderService } from "../../../services/OrderService";
 
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card"
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Legend } from "recharts"
-
-const data = [
-  { name: "Monday", online: 15, offline: 10 },
-  { name: "Tuesday", online: 25, offline: 15 },
-  { name: "Wednesday", online: 20, offline: 12 },
-  { name: "Thursday", online: 30, offline: 18 },
-  { name: "Friday", online: 28, offline: 20 },
-  { name: "Saturday", online: 35, offline: 25 },
-  { name: "Sunday", online: 32, offline: 22 },
-]
-
- function  RevenueChart() {
+function RevenueChart() {
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    fetchDailyStatus();
+  }, []);
+  const fetchDailyStatus = async () => {
+    try {
+      const response = await OrderService().fetchDaily();
+      console.log("Daily Revenue Response:", response);
+      if (response.success) {
+        const dailyData = response?.data?.daily || [];
+        const formattedData = dailyData.map((item) => ({
+          name: item.name,
+          count: item.count,
+          revenue: item.revenue,
+        }));
+        console.log(formattedData);
+        setData(formattedData);
+      }
+    } catch (error) {
+      console.error("Unexpected error fetching daily revenue:", error);
+    }
+  };
   return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900">Total Revenue</CardTitle>
+    <Card className="border-0 shadow-sm pb-0">
+      <CardHeader className="">
+        <CardTitle className="text-lg font-semibold text-gray-900">
+          Daily Sales Over Time
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} barCategoryGap="20%">
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#48018E" }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#48018E" }} />
+        <div className="w-full h-62 ">
+          <ResponsiveContainer
+            // style={{ marginLeft: "-24px" }}
+            width="100%"
+            height="100%"
+          >
+            <BarChart
+              data={data}
+              barCategoryGap="30%"
+              margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
+            >
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#48018E" }}
+              />
+              <YAxis
+                axisLine={true}
+                tickLine={true}
+                tick={{ fontSize: 12, fill: "#48018E" }}
+              />
               <Legend
                 verticalAlign="bottom"
                 height={36}
                 iconType="circle"
                 wrapperStyle={{ fontSize: "12px", color: "#48018E" }}
               />
-              <Bar dataKey="online" fill="#ce8d23" radius={[4, 4, 0, 0]} name="Online Sales" />
-              <Bar dataKey="offline" fill="#261712" radius={[4, 4, 0, 0]} name="Offline Sales" />
+              <Bar
+                dataKey="count"
+                fill="#FFB6C1"
+                radius={[4, 4, 0, 0]}
+                name="Today Orders"
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 export default RevenueChart;

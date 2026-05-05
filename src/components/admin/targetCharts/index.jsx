@@ -1,6 +1,5 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card"
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 const data = [
   { name: "Jan", reality: 8, target: 12 },
@@ -15,22 +14,43 @@ const data = [
   { name: "Oct", reality: 15, target: 19 },
   { name: "Nov", reality: 20, target: 24 },
   { name: "Dec", reality: 17, target: 21 },
-]
+];
 
 export function TargetRealityChart() {
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 ">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900">Target vs Reality</CardTitle>
+        <CardTitle className="text-lg font-semibold text-gray-900">
+         Yearly Sales Comparison
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} barCategoryGap="20%">
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6B7280" }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6B7280" }} />
-              <Bar dataKey="reality" fill="#261712" radius={[4, 4, 0, 0]} name="Reality Sales" />
-              <Bar dataKey="target" fill="#ce8d23" radius={[4, 4, 0, 0]} name="Target Sales" />
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#6B7280" }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#6B7280" }}
+              />
+              <Bar
+                dataKey="reality"
+                fill="#261712"
+                radius={[4, 4, 0, 0]}
+                name="Reality Sales"
+              />
+              <Bar
+                dataKey="target"
+                fill="#ce8d23"
+                radius={[4, 4, 0, 0]}
+                name="Target Sales"
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -52,5 +72,5 @@ export function TargetRealityChart() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

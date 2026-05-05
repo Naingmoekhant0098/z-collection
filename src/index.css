@@ -73,10 +73,34 @@ button:focus-visible {
 
 @custom-variant dark (&:is(.dark *));
 
-body{
+body {
   font-family: "Poppins", sans-serif;
   font-weight: 300;
   font-style: normal;
+}
+:root {
+  --main: #ffb6c1;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(
+    to bottom right,
+    #fecdd3,
+    #fdf2f8,
+    #e9d5ff
+  ); /* same as Tailwind */
+}
+
+@supports (padding: max(0px)) {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @theme inline {
@@ -91,9 +115,9 @@ body{
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
-  --color-main: #fff;
+  --color-main: #fb64b6;
   --color-secondary: #333;
-  --color-hoverMain :"#333";
+  --color-hoverMain: "#333";
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -121,7 +145,7 @@ body{
 }
 
 :root {
-  /* --main:"#00A98B"; */
+  --main: "#FFB6C1";
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -157,7 +181,7 @@ body{
 }
 
 .dark {
-  /* --main:"#00A98B"; */
+  --main: "#FFB6C1";
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -200,8 +224,16 @@ body{
   }
 }
 
-td{
-  
+td {
   padding-left: 20px;
   padding-right: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 14px !important;
+    touch-action: manipulation;
+  }
 }

@@ -88,7 +88,7 @@ export function UserTable() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex items-center justify-between mb-8">
+      {/* <div className="flex items-center justify-between mb-8">
         <div>
           <div className="text-lg font-semibold text-gray-900">Users</div>
           <p className="text-sm text-gray-600">Manage all user accounts</p>
@@ -104,9 +104,9 @@ export function UserTable() {
           <Plus className="mr-1 h-4 w-4" />
           Add New
         </Button>
-      </div>
+      </div> */}
 
-      <div className="flex flex-row justify-between gap-3 mb-4">
+      <div className="flex flex-row justify-between gap-3 mb-4 mt-6">
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -134,19 +134,15 @@ export function UserTable() {
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-black hover:bg-black">
-                  <TableHead className="text-white p-4 font-medium text-[14px] border-r border-gray-500 text-center">
-                    User
-                  </TableHead>
+                <TableRow className="bg-main hover:bg-main">
+                  
                   <TableHead className="text-white p-4 font-medium text-[14px] border-r border-gray-500 text-center">
                     Name
                   </TableHead>
                   <TableHead className="text-white p-4 font-medium text-[14px] border-r border-gray-500 text-center">
-                    Email
+                    Phone
                   </TableHead>
-                  <TableHead className="text-white p-4 font-medium text-[14px] border-r border-gray-500 text-center">
-                    Role
-                  </TableHead>
+                   
                   <TableHead className="text-white p-4 font-medium text-[14px] border-r border-gray-500 text-center">
                     Status
                   </TableHead>
@@ -163,22 +159,14 @@ export function UserTable() {
                 {sampleData?.length > 0 ? (
                   sampleData.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center">
-                          <UserCircle className="h-10 w-10 text-gray-300" />
-                        </div>
-                      </TableCell>
+                      
                       <TableCell className="font-medium text-gray-900 text-center">
                         {user.name}
                       </TableCell>
                       <TableCell className="text-gray-700 text-center">
                         {user.email}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <span className="px-2 py-1 rounded bg-slate-100 text-xs font-medium">
-                          {user.role}
-                        </span>
-                      </TableCell>
+                      
                       <TableCell className="text-center">
                         <span
                           className={cn(

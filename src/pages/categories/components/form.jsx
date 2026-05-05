@@ -67,7 +67,7 @@ export default function SendNotificationForm() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Send Notification</BreadcrumbPage>
+            <BreadcrumbPage>Categories</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

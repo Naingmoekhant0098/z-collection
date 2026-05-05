@@ -1,6 +1,6 @@
 
 import { Users, UserCheck, UserX } from "lucide-react" 
-import { PostTable } from "../../components/admin/posts";
+// import { PostTable } from "../../components/admin/products";
 import { UserTable } from "./components/table/table";
  
 
