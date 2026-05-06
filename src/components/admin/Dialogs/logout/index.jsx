@@ -12,11 +12,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../../ui/dialog"
-import { LogOut } from "lucide-react"
+import { Cookie, LogOut } from "lucide-react"
 
 export function LogoutConfirmation({isOpen ,handleColse}) {
   const navigate = useNavigate();
   const handleLogout = () => {
+    Cookies.remove("token");
     navigate('/');
      
   }
