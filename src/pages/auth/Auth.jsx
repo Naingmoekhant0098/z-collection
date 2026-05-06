@@ -56,7 +56,7 @@ export function AdminLogin() {
           Cookies.set("token", response.data?.data?.token);
           console.log(Cookies.get('token'))
           setIsLoading(false);
-          // navigate("/");
+          navigate("/");
         }
       } catch (error) {}
     } catch (error) {
