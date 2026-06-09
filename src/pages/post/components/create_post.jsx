@@ -1,5 +1,439 @@
+// import React, { useEffect, useState } from "react";
+// import { useNavigate, useParams } from "react-router-dom";
+// import {
+//   Breadcrumb,
+//   BreadcrumbItem,
+//   BreadcrumbLink,
+//   BreadcrumbList,
+//   BreadcrumbPage,
+//   BreadcrumbSeparator,
+// } from "../../../components/ui/breadcrumb";
+// import { ArrowLeft, Plus, Trash2, Edit3, Save, Banknote } from "lucide-react";
+// import { ProductVariantDialog } from "./create_varient";
+// import { ProductService } from "../../../services/PostService";
+// import { CategoryService } from "../../../services/BannerService";
+// import LoadingOverlay from "../../../components/Loading";
+// import customToast from "../../../components/customToast";
+// import { Input } from "../../../components/ui/input";
+
+// function ProductForm() {
+//   const navigate = useNavigate();
+//   const { id } = useParams(); 
+//   const isEdit = Boolean(id); 
+
+//   const [isOpen, setIsOpen] = useState(false);
+//   const [dialogMode, setDialogMode] = useState("create"); // "create" or "edit"
+//   const [editingVariantIndex, setEditingVariantIndex] = useState(null);
+//   const [selectedVariantData, setSelectedVariantData] = useState(null);
+  
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [categories, setCategories] = useState([]);
+//   const [previewImage, setPreviewImage] = useState(null);
+  
+//   const { create, updateByIdPut, getById } = ProductService(); 
+//   const { fetchAll } = CategoryService();
+
+//   const [formData, setFormData] = useState({
+//     name: "",
+//     category: "",
+//     description: "",
+//     image: null,
+//     total_cost: 0,
+//     variants: [],
+//   });
+
+//   const handleChange = (e) => {
+//     setFormData({ ...formData, [e.target.name]: e.target.value });
+//   };
+
+//   useEffect(() => {
+//     fetchAllCategories();
+//     if (isEdit) {
+//       fetchProductDetails();
+//     }
+//   }, [id]);
+
+//   const fetchAllCategories = async () => {
+//     try {
+//       const res = await fetchAll();
+//       setCategories(res?.data?.data || []);
+//     } catch (error) {
+//       console.error("Error fetching categories:", error);
+//     }
+//   };
+
+//   const fetchProductDetails = async () => {
+//     setIsLoading(true);
+//     try {
+//       const res = await getById(id);
+//       if (res?.data?.success || res?.status) {
+//         const product = res.data.data;
+//         setFormData({
+//           name: product.name || "",
+//           category: product.category_id || product.category || "",
+//           description: product.description || "",
+//           total_cost: product.total_cost || 0,
+//           image: product.image || null,
+//           variants: product.variants || [],
+//         });
+//         if (product.image) {
+//           setPreviewImage(product.image);
+//         }
+//       } else {
+//         customToast.error("Failed to load product details", res.message);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching product data:", error);
+//       customToast.error("Server Error", "Could not load data for editing.");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   // --- Variant Handlers ---
+//   const addVariant = () => {
+//     setDialogMode("create");
+//     setEditingVariantIndex(null);
+//     setSelectedVariantData(null);
+//     setIsOpen(true);
+//   };
+
+//   const editVariant = (index) => {
+//     setDialogMode("edit");
+//     setEditingVariantIndex(index);
+//     setSelectedVariantData(formData.variants[index]);
+//     setIsOpen(true);
+//   };
+
+//   const handleDialogClose = () => {
+//     setIsOpen(false);
+//     setEditingVariantIndex(null);
+//     setSelectedVariantData(null);
+//   };
+
+//   const submitVariant = (variantData) => {
+//     setFormData((prev) => {
+//       const updatedVariants = [...prev.variants];
+      
+//       if (dialogMode === "edit" && editingVariantIndex !== null) {
+        
+//         updatedVariants[editingVariantIndex] = {
+//           ...updatedVariants[editingVariantIndex],
+//           ...variantData,
+//           available_stock: variantData.stock || variantData.initial_stock  
+//         };
+//       } else {
+       
+//         updatedVariants.push({
+//           ...variantData,
+//           available_stock: variantData.stock || variantData.initial_stock,
+//         });
+//       }
+
+//       return { ...prev, variants: updatedVariants };
+//     });
+//     handleDialogClose();
+//   };
+
+//   const removeVariant = (index) => {
+//     const newVariants = formData.variants.filter((_, i) => i !== index);
+//     setFormData({ ...formData, variants: newVariants });
+//   };
+
+//   // --- Submit handler ---
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+
+//     if (!formData.name || !formData.category || !formData.description) {
+//       customToast.error("Missing Information", "Please fill in general details.");
+//       return;
+//     }
+
+//     if (!formData.image) {
+//       customToast.error("Missing Image", "Please upload a product image.");
+//       return;
+//     }
+
+//     if (!formData.variants || formData.variants.length === 0) {
+//       customToast.error("No Variants", "Please add at least one variant.");
+//       return;
+//     }
+
+//     setIsLoading(true);
+
+//     try {
+//       const data = new FormData();
+//       data.append("name", formData.name);
+//       data.append("category_id", formData.category?._id || formData.category);
+//       data.append("description", formData.description);
+//       data.append("total_cost", formData.total_cost);
+//       data.append("is_active", "true");
+//       data.append("variants", JSON.stringify(formData.variants));
+      
+//       if (formData.image instanceof File) {
+//         data.append("image", formData.image);
+//       }
+//       let res;
+//       if (isEdit) {
+//         res = await updateByIdPut(id, data);
+//       } else {
+//         res = await create(data);
+//       }
+//       if (res?.data?.success) {
+//         customToast.success("Success", isEdit ? "Product updated successfully!" : "Product created successfully!");
+//         navigate("/admin/products");
+//       } else {
+//         customToast.error(isEdit ? "Update Failed" : "Creation Failed", res?.message || "Error saving product.");
+//       }
+//     } catch (error) {
+//       console.error("Submission Error:", error);
+//       customToast.error("Server Error", "An unexpected error occurred.");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const handleImageUpload = (e) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       setFormData((prev) => ({ ...prev, image: file }));
+//       setPreviewImage(URL.createObjectURL(file));
+//     }
+//   };
+
+//   const removeImage = () => {
+//     setFormData((prev) => ({ ...prev, image: null }));
+//     setPreviewImage(null);
+//   };
+
+//   return (
+//     <main className="flex-1 overflow-y-auto ">
+//       <div className="max-w-5xl mx-auto space-y-6">
+        
+//         <ProductVariantDialog
+//           isOpen={isOpen}
+//           type={dialogMode}
+//           variantData={selectedVariantData} 
+//           handleClose={handleDialogClose}
+//           submitVariant={submitVariant}
+//         />
+
+//         {isLoading && <LoadingOverlay message={isEdit ? "Updating Product..." : "Creating Product..."} />}
+        
+//         <div className="flex flex-col gap-4">
+//           <Breadcrumb>
+//             <BreadcrumbList>
+//               <BreadcrumbItem>
+//                 <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
+//               </BreadcrumbItem>
+//               <BreadcrumbSeparator />
+//               <BreadcrumbItem>
+//                 <BreadcrumbLink href="/products">Products</BreadcrumbLink>
+//               </BreadcrumbItem>
+//               <BreadcrumbSeparator />
+//               <BreadcrumbItem>
+//                 <BreadcrumbPage>{isEdit ? "Edit Product" : "Create Product"}</BreadcrumbPage>
+//               </BreadcrumbItem>
+//             </BreadcrumbList>
+//           </Breadcrumb>
+
+//           <div className="flex items-center justify-between">
+//             <div
+//               onClick={() => navigate(-1)}
+//               className="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer hover:bg-white transition-all group"
+//             >
+//               <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+//               <span>Cancel</span>
+//             </div>
+//             <button
+//               onClick={handleSubmit}
+//               className="flex items-center gap-2 bg-main text-white px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 transition-colors shadow-sm"
+//             >
+//               <Save className="w-4 h-4" />
+//               {isEdit ? "Update Product" : "Save Product"}
+//             </button>
+//           </div>
+//         </div>
+
+//         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-3 -mt-1">
+//           {/* General info & image section unchanged */}
+//           <div className="lg:col-span-1 space-y-4">
+//             <div className="p-3 rounded-xl border border-slate-200 space-y-3 bg-transparent">
+//               <h2 className="text-sm font-bold uppercase tracking-wider">Product Image</h2>
+//               <div className="relative">
+//                 {formData.image ? (
+//                   <div className="relative group h-[140px] rounded-xl overflow-hidden border border-slate-100">
+//                     <img src={previewImage} className="w-full h-full object-cover" alt="Product preview" />
+//                     <div className="absolute z-40 inset-0 bg-black/40 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+//                       <button
+//                         type="button"
+//                         onClick={removeImage}
+//                         className="p-2 bg-white rounded-full hover:bg-red-50 text-red-500 transition-colors"
+//                       >
+//                         <Trash2 className="w-5 h-5" />
+//                       </button>
+//                     </div>
+//                   </div>
+//                 ) : (
+//                   <label className="h-[140px] flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-pink-300 transition-all group">
+//                     <div className="p-3 bg-slate-50 rounded-full group-hover:bg-pink-50 transition-colors">
+//                       <Plus className="w-6 h-6 text-slate-400 group-hover:text-pink-500" />
+//                     </div>
+//                     <span className="text-xs text-slate-500 mt-3 font-semibold">Click to upload image</span>
+//                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+//                   </label>
+//                 )}
+//               </div>
+//             </div>
+
+//             <div className=" p-3 rounded-xl border border-grey-200 space-y-2">
+//               <h2 className="text-sm font-bold mb-2 uppercase tracking-wider">General Info</h2>
+//               <div className="space-y-1">
+//                 <label className="text-xs uppercase font-semibold text-slate-700">Product Name</label>
+//                 <input
+//                   type="text"
+//                   name="name"
+//                   value={formData.name}
+//                   placeholder="e.g. Soft Granite Dress"
+//                   className="w-full mt-1 p-2.5 py-2 text-xs border rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
+//                   onChange={handleChange}
+//                 />
+//               </div>
+
+//               <div className="space-y-1">
+//                 <label className="text-xs mb-1 uppercase font-semibold text-slate-700">Cost(အရင်း)</label>
+//                 <div className="relative">
+//                   <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+//                   <Input
+//                     name="total_cost"
+//                     type="number"
+//                     placeholder="e.g. 45"
+//                     value={formData.total_cost}
+//                     onChange={handleChange}
+//                     className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
+//                   />
+//                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">.000 K</span>
+//                 </div>
+//               </div>
+
+//               <div className="space-y-1">
+//                 <label className="text-xs uppercase font-semibold text-slate-700">Category</label>
+//                 <select
+//                   name="category"
+//                   value={formData.category}
+//                   className="w-full mt-1 p-2.5 py-2 text-xs border rounded-lg focus:ring-2 focus:ring-pink-200 transition-all outline-none"
+//                   onChange={handleChange}
+//                 >
+//                   <option value="">Select Category</option>
+//                   {categories?.length > 0 &&
+//                     categories?.map((cat) => (
+//                       <option key={cat._id} value={cat._id}>
+//                         {cat.name}
+//                       </option>
+//                     ))}
+//                 </select>
+//               </div>
+
+//               <div className="space-y-1">
+//                 <label className="text-xs uppercase font-semibold text-slate-700">Description</label>
+//                 <textarea
+//                   name="description"
+//                   rows="4"
+//                   value={formData.description}
+//                   placeholder="Describe the product..."
+//                   className="w-full mt-1 p-2.5 text-xs border rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
+//                   onChange={handleChange}
+//                 />
+//               </div>
+//             </div>
+//           </div>
+          
+//           {/* Table section containing both edit and delete actions */}
+//           <div className="lg:col-span-2 space-y-2">
+//             <div className=" p-3 rounded-xl border border-slate-200 space-y-4">
+//               <div className="flex items-center justify-between">
+//                 <h2 className="text-sm font-bold uppercase tracking-wider">Pricing & Variants</h2>
+//                 <button
+//                   type="button"
+//                   onClick={addVariant}
+//                   className="flex items-center gap-1 text-xs font-medium text-pink-600 hover:text-pink-700 transition-colors"
+//                 >
+//                   <Plus className="w-3.5 h-3.5" /> ADD VARIANT
+//                 </button>
+//               </div>
+
+//               <div className="border rounded-lg overflow-auto border-slate-200 ">
+//                 <table className="w-full text-sm text-left">
+//                   <thead className="bg-pink-100 text-pink-900 uppercase text-[10px] font-bold tracking-wider">
+//                     <tr>
+//                       <th className="px-4 py-3">Size</th>
+//                       <th className="px-4 py-3">Color</th>
+//                       <th className="px-4 py-3">Stock</th>
+//                       <th className="px-4 py-3 text-right">Sell Price</th>
+//                       <th className="px-4 py-3 text-center">Est. Profit</th>
+//                       <th className="px-4 py-3 text-center">Actions</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody className="divide-y divide-slate-100 bg-white">
+//                     {formData.variants.map((variant, index) => (
+//                       <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+//                         <td className="px-4 py-3 font-medium text-slate-700">{variant.size || "—"}</td>
+//                         <td className="px-4 py-3 text-slate-600">{variant.color || "—"}</td>
+//                         <td className="px-4 py-3">
+//                           <span
+//                             className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+//                               (variant.initial_stock ?? variant.stock) < 5
+//                                 ? "bg-red-50 text-red-600"
+//                                 : "bg-slate-100 text-slate-600"
+//                             }`}
+//                           >
+//                             {variant.initial_stock ?? variant.stock} Stocks
+//                           </span>
+//                         </td>
+//                         <td className="px-4 py-3 text-right font-bold text-slate-900">
+//                           {variant.price ? `${variant.price}K` : "—"}
+//                         </td>
+//                         <td className="px-4 py-3 text-right font-bold text-slate-900">
+//                           {(variant?.initial_stock ??  0) * (variant?.price || 0)} MMK
+//                         </td>
+//                         <td className="px-4 py-3 text-center">
+//                           <div className="flex items-center justify-center gap-1">
+//                             <button
+//                               type="button"
+//                               onClick={() => editVariant(index)}
+//                               className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+//                             >
+//                               <Edit3 className="w-4 h-4" />
+//                             </button>
+//                             {formData.variants.length > 1 && (
+//                               <button
+//                                 type="button"
+//                                 onClick={() => removeVariant(index)}
+//                                 className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+//                               >
+//                                 <Trash2 className="w-4 h-4" />
+//                               </button>
+//                             )}
+//                           </div>
+//                         </td>
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//             </div>
+//           </div>
+//         </form>
+//       </div>
+//     </main>
+//   );
+// }
+
+// export default ProductForm;
+
+
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,61 +442,145 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "../../../components/ui/breadcrumb";
-import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, Banknote } from "lucide-react";
 import { ProductVariantDialog } from "./create_varient";
 import { ProductService } from "../../../services/PostService";
-import { set } from "zod";
 import { CategoryService } from "../../../services/BannerService";
 import LoadingOverlay from "../../../components/Loading";
 import customToast from "../../../components/customToast";
+import { Input } from "../../../components/ui/input";
 
-function CreateProduct() {
+function ProductForm() {
   const navigate = useNavigate();
+  const { id } = useParams(); 
+  const isEdit = Boolean(id); 
+
   const [isOpen, setIsOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState("create"); 
+  const [editingVariantIndex, setEditingVariantIndex] = useState(null);
+  const [selectedVariantData, setSelectedVariantData] = useState(null);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
-  const { create } = ProductService();
+  
+  const { create, updateByIdPut, getById } = ProductService(); 
   const { fetchAll } = CategoryService();
+
   const [formData, setFormData] = useState({
     name: "",
     category: "",
     description: "",
     image: null,
+    total_cost: 0,
     variants: [],
   });
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   useEffect(() => {
-    fetchAllCagory();
-  }, []);
+    fetchAllCategories();
+    if (isEdit) {
+      fetchProductDetails();
+    }
+  }, [id]);
 
-  const fetchAllCagory = async () => {
+  const fetchAllCategories = async () => {
     try {
       const res = await fetchAll();
       setCategories(res?.data?.data || []);
-
-      if (res.status) {
-        console.log("Fetched Categories:", res.data);
-      } else {
-        console.error("Failed to fetch categories:", res.message);
-      }
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
 
+  const fetchProductDetails = async () => {
+    setIsLoading(true);
+    try {
+      const res = await getById(id);
+      if (res?.data?.success || res?.status) {
+        const product = res.data.data;
+        
+        // Ensure each incoming variant has clear remaining and initial stock parameters mapped
+        const mappedVariants = (product.variants || []).map((variant) => {
+          const currentStock = variant.remaining_stock ?? variant.initial_stock ?? variant.stock ?? 0;
+          return {
+            ...variant,
+            initial_stock: variant.initial_stock ?? currentStock,
+            remaining_stock: currentStock,
+          };
+        });
+
+        setFormData({
+          name: product.name || "",
+          category: product.category_id || product.category || "",
+          description: product.description || "",
+          total_cost: product.total_cost || 0,
+          image: product.image || null,
+          variants: mappedVariants,
+        });
+        
+        if (product.image) {
+          setPreviewImage(product.image);
+        }
+      } else {
+        customToast.error("Failed to load product details", res.message);
+      }
+    } catch (error) {
+      console.error("Error fetching product data:", error);
+      customToast.error("Server Error", "Could not load data for editing.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Variant Handlers ---
   const addVariant = () => {
+    setDialogMode("create");
+    setEditingVariantIndex(null);
+    setSelectedVariantData(null);
     setIsOpen(true);
   };
 
+  const editVariant = (index) => {
+    setDialogMode("edit");
+    setEditingVariantIndex(index);
+    setSelectedVariantData(formData.variants[index]);
+    setIsOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsOpen(false);
+    setEditingVariantIndex(null);
+    setSelectedVariantData(null);
+  };
+
   const submitVariant = (variantData) => {
-    setFormData((prev) => ({
-      ...prev,
-      variants: [...prev.variants, { ...variantData, available_stock: variantData.stock }],
-    }));
+    setFormData((prev) => {
+      const updatedVariants = [...prev.variants];
+      
+      if (dialogMode === "edit" && editingVariantIndex !== null) {
+        // Keeping original initial_stock, but applying the newly updated remaining_stock
+        updatedVariants[editingVariantIndex] = {
+          ...updatedVariants[editingVariantIndex],
+          ...variantData,
+          initial_stock: updatedVariants[editingVariantIndex].initial_stock, // Keep original
+          remaining_stock: variantData.remaining_stock, // Update to new value
+        };
+      } else {
+        // Clean additions balance both elements to match incoming values
+        updatedVariants.push({
+          ...variantData,
+          initial_stock: variantData.remaining_stock,
+          remaining_stock: variantData.remaining_stock,
+        });
+      }
+
+      return { ...prev, variants: updatedVariants };
+    });
+    handleDialogClose();
   };
 
   const removeVariant = (index) => {
@@ -73,12 +591,8 @@ function CreateProduct() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Validation
     if (!formData.name || !formData.category || !formData.description) {
-      customToast.error(
-        "Missing Information",
-        "Please fill in general details."
-      );
+      customToast.error("Missing Information", "Please fill in general details.");
       return;
     }
 
@@ -95,42 +609,29 @@ function CreateProduct() {
     setIsLoading(true);
 
     try {
-      // 2. Initialize FormData
       const data = new FormData();
-
-      // 3. Append Simple Fields
       data.append("name", formData.name);
-      data.append("category_id", formData.category);
+      data.append("category_id", formData.category?._id || formData.category);
       data.append("description", formData.description);
+      data.append("total_cost", formData.total_cost);
       data.append("is_active", "true");
-
-     
-      data.append("image", formData.image);
-
-      // 5. Append Array (Must be stringified for FormData)
       data.append("variants", JSON.stringify(formData.variants));
+      
+      if (formData.image instanceof File) {
+        data.append("image", formData.image);
+      }
 
-      console.log("Submitting FormData to Backend...");
-
-     
-      const res = await create(data);
-      console.log("Backend Response:", res);
-
+      let res;
+      if (isEdit) {
+        res = await updateByIdPut(id, data);
+      } else {
+        res = await create(data);
+      }
       if (res?.data?.success) {
-        customToast.success("Success", "Product created successfully!");
-        setFormData({
-          name: "",
-          category: "",
-          description: "",
-          image: null,
-          variants: [],
-        });
+        customToast.success("Success", isEdit ? "Product updated successfully!" : "Product created successfully!");
         navigate("/admin/products");
       } else {
-        customToast.error(
-          "Creation Failed",
-          res.message || "Error saving product."
-        );
+        customToast.error(isEdit ? "Update Failed" : "Creation Failed", res?.message || "Error saving product.");
       }
     } catch (error) {
       console.error("Submission Error:", error);
@@ -142,30 +643,31 @@ function CreateProduct() {
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
-
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        image: file,
-      }));
+      setFormData((prev) => ({ ...prev, image: file }));
       setPreviewImage(URL.createObjectURL(file));
     }
   };
 
   const removeImage = () => {
     setFormData((prev) => ({ ...prev, image: null }));
+    setPreviewImage(null);
   };
 
   return (
     <main className="flex-1 overflow-y-auto ">
       <div className="max-w-5xl mx-auto space-y-6">
+        
         <ProductVariantDialog
           isOpen={isOpen}
-          type="create"
-          handleClose={() => setIsOpen(!isOpen)}
+          type={dialogMode}
+          variantData={selectedVariantData} 
+          handleClose={handleDialogClose}
           submitVariant={submitVariant}
         />
-        {isLoading && <LoadingOverlay message="Creating Product..." />}
+
+        {isLoading && <LoadingOverlay message={isEdit ? "Updating Product..." : "Creating Product..."} />}
+        
         <div className="flex flex-col gap-4">
           <Breadcrumb>
             <BreadcrumbList>
@@ -178,7 +680,7 @@ function CreateProduct() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Create Product</BreadcrumbPage>
+                <BreadcrumbPage>{isEdit ? "Edit Product" : "Create Product"}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -196,30 +698,20 @@ function CreateProduct() {
               className="flex items-center gap-2 bg-main text-white px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 transition-colors shadow-sm"
             >
               <Save className="w-4 h-4" />
-              Save Product
+              {isEdit ? "Update Product" : "Save Product"}
             </button>
           </div>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-3 -mt-1"
-        >
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-3 -mt-1">
           <div className="lg:col-span-1 space-y-4">
-            <div className="p-3 rounded-xl border border-slate-200 space-y-3  bg-transparent">
-              <h2 className="text-sm font-bold uppercase tracking-wider">
-                Product Image
-              </h2>
-
+            <div className="p-3 rounded-xl border border-slate-200 space-y-3 bg-transparent">
+              <h2 className="text-sm font-bold uppercase tracking-wider">Product Image</h2>
               <div className="relative">
                 {formData.image ? (
                   <div className="relative group h-[140px] rounded-xl overflow-hidden border border-slate-100">
-                    <img
-                      src={previewImage}
-                      className="w-full h-full object-cover"
-                      alt="Product preview"
-                    />
-                    <div className="absolute z-40 inset-0 bg-black/40  group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <img src={previewImage} className="w-full h-full object-cover" alt="Product preview" />
+                    <div className="absolute z-40 inset-0 bg-black/40 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button
                         type="button"
                         onClick={removeImage}
@@ -234,35 +726,21 @@ function CreateProduct() {
                     <div className="p-3 bg-slate-50 rounded-full group-hover:bg-pink-50 transition-colors">
                       <Plus className="w-6 h-6 text-slate-400 group-hover:text-pink-500" />
                     </div>
-                    <span className="text-xs text-slate-500 mt-3 font-semibold">
-                      Click to upload image
-                    </span>
-                    <span className="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">
-                      Recommended: 4:5 Portrait
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
+                    <span className="text-xs text-slate-500 mt-3 font-semibold">Click to upload image</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                   </label>
                 )}
               </div>
             </div>
 
-            <div className=" p-3 rounded-xl border border-grey-200  space-y-2">
-              <h2 className="text-sm font-bold mb-2 uppercase  tracking-wider">
-                General Info
-              </h2>
-
+            <div className=" p-3 rounded-xl border border-grey-200 space-y-2">
+              <h2 className="text-sm font-bold mb-2 uppercase tracking-wider">General Info</h2>
               <div className="space-y-1">
-                <label className="text-xs  uppercase font-semibold text-slate-700">
-                  Product Name
-                </label>
+                <label className="text-xs uppercase font-semibold text-slate-700">Product Name</label>
                 <input
                   type="text"
                   name="name"
+                  value={formData.name}
                   placeholder="e.g. Soft Granite Dress"
                   className="w-full mt-1 p-2.5 py-2 text-xs border rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
                   onChange={handleChange}
@@ -270,16 +748,30 @@ function CreateProduct() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs uppercase font-semibold text-slate-700">
-                  Category
-                </label>
+                <label className="text-xs mb-1 uppercase font-semibold text-slate-700">Cost(အရင်း)</label>
+                <div className="relative">
+                  <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                  <Input
+                    name="total_cost"
+                    type="number"
+                    placeholder="e.g. 45"
+                    value={formData.total_cost}
+                    onChange={handleChange}
+                    className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">.000 K</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs uppercase font-semibold text-slate-700">Category</label>
                 <select
                   name="category"
-                  className="w-full mt-1 p-2.5 py-2 text-xs  border rounded-lg focus:ring-2 focus:ring-pink-200  transition-all  outline-none"
+                  value={formData.category}
+                  className="w-full mt-1 p-2.5 py-2 text-xs border rounded-lg focus:ring-2 focus:ring-pink-200 transition-all outline-none"
                   onChange={handleChange}
                 >
                   <option value="">Select Category</option>
-
                   {categories?.length > 0 &&
                     categories?.map((cat) => (
                       <option key={cat._id} value={cat._id}>
@@ -290,12 +782,11 @@ function CreateProduct() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs  uppercase font-semibold text-slate-700">
-                  Description
-                </label>
+                <label className="text-xs uppercase font-semibold text-slate-700">Description</label>
                 <textarea
                   name="description"
                   rows="4"
+                  value={formData.description}
                   placeholder="Describe the product..."
                   className="w-full mt-1 p-2.5 text-xs border rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
                   onChange={handleChange}
@@ -303,12 +794,11 @@ function CreateProduct() {
               </div>
             </div>
           </div>
+          
           <div className="lg:col-span-2 space-y-2">
-            <div className=" p-3 rounded-xl border border-slate-200  space-y-4">
+            <div className=" p-3 rounded-xl border border-slate-200 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold  uppercase  tracking-wider">
-                  Pricing & Variants
-                </h2>
+                <h2 className="text-sm font-bold uppercase tracking-wider">Pricing & Variants</h2>
                 <button
                   type="button"
                   onClick={addVariant}
@@ -324,65 +814,61 @@ function CreateProduct() {
                     <tr>
                       <th className="px-4 py-3">Size</th>
                       <th className="px-4 py-3">Color</th>
-                      <th className="px-4 py-3">Stock</th>
-                      <th className="px-4 py-3 text-right">Buy Price</th>
+                      {/* Updates the table header visually depending on mode */}
+                      <th className="px-4 py-3">{isEdit ? "Stock (Remaining)" : "Stock"}</th>
                       <th className="px-4 py-3 text-right">Sell Price</th>
                       <th className="px-4 py-3 text-center">Est. Profit</th>
-                      <th className="px-4 py-3 text-center"></th>
+                      <th className="px-4 py-3 text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {formData.variants.map((variant, index) => (
-                      <tr
-                        key={index}
-                        className="hover:bg-slate-50/50 transition-colors"
-                      >
-                        <td className="px-4 py-3 font-medium text-slate-700">
-                          {variant.size || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {variant.color || "—"}
-                        </td>
+                      <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3 font-medium text-slate-700">{variant.size || "—"}</td>
+                        <td className="px-4 py-3 text-slate-600">{variant.color || "—"}</td>
                         <td className="px-4 py-3">
                           <span
                             className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                              variant.stock < 5
+                              (variant.remaining_stock ?? variant.initial_stock ?? 0) < 5
                                 ? "bg-red-50 text-red-600"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >
-                            {variant.stock}
+                            {variant.remaining_stock ?? variant.initial_stock ?? 0} Stocks
                           </span>
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-500">
-                          {variant.buy_price ? `${variant.buy_price}K` : "—"}
                         </td>
                         <td className="px-4 py-3 text-right font-bold text-slate-900">
                           {variant.price ? `${variant.price}K` : "—"}
                         </td>
                         <td className="px-4 py-3 text-right font-bold text-slate-900">
-                          {variant?.stock *
-                            (variant?.price - variant?.buy_price)}
+                          {/* Profit calculation checks remaining_stock first */}
+                          {(variant?.remaining_stock ?? variant?.initial_stock ?? 0) * (variant?.price || 0)} MMK
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {formData.variants.length > 1 && (
+                          <div className="flex items-center justify-center gap-1">
                             <button
                               type="button"
-                              onClick={() => removeVariant(index)}
-                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              onClick={() => editVariant(index)}
+                              className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Edit3 className="w-4 h-4" />
                             </button>
-                          )}
+                            {formData.variants.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeVariant(index)}
+                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="text-[10px] text-slate-400 italic">
-                * Note: Prices are entered in thousands (e.g., 40 = 40,000 MMK)
-              </p>
             </div>
           </div>
         </form>
@@ -391,4 +877,5 @@ function CreateProduct() {
   );
 }
 
-export default CreateProduct;
+export default ProductForm;
+

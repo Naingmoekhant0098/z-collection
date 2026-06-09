@@ -1,153 +1,92 @@
-// import React from 'react'
-// import { Card,CardContent } from '../../../ui/card'
-// import { Button } from '../../../ui/button'
-// import { useNavigate } from 'react-router-dom'
-
-// function ProductCard({product}) {
-//  const navigate = useNavigate()
-//   return (
-//     <Card
-//     key={product._id}
-//     className="p-3 shadow-none  bg-transparent space-y-0 transition-shadow"
-//   >
-//     <div className=" relative ">
-//       <img
-//         src={
-//           product.image ||
-//           "https://cdn.shopify.com/s/files/1/0070/7032/articles/Clothing-Photography_1ce4a4bc-0651-43df-8260-f6d8f01628f4.jpg?v=1747247930"
-//         }
-//         className="h-40 w-full object-cover rounded-md"
-//       />
-//       <p className="text-xs  font-normal bg-pink-200 border-pink-400 absolute top-3 right-2 px-2 py-1 rounded-xl text-gray-500">
-//         {product.category_id?.name}
-//       </p>
-//     </div>
-
-//     <CardContent className="p-2 -mt-2 pb-1  space-y-1">
-//       <h2 className="font-semibold">{product.name}</h2>
-
-//       <p className="text-xs line-clamp-2 text-gray-600 tracking-wide">
-//         {product.description}
-//       </p>
-
-//       <div className=" h-[1px] my-3 w-full bg-white" />
-
-//       <div className="flex justify-between text-sm">
-//         <div className="">
-//           <span className=" text-gray-500">Price :</span>{" "}
-//           <span className=" font-medium">
-//             {product.variants?.[0]?.price}000 MMK
-//           </span>
-//         </div>
-//         <div>
-//           <span className=" text-gray-500">Stock :</span>{" "}
-//           <span className=" font-medium">
-//             {product.variants?.[0]?.stock} items
-//           </span>
-//         </div>
-//       </div>
-
-//       <Button
-//         onClick={() => navigate(`/admin/products/${product?._id}`)}
-//         className="w-full mt-3 bg-main"
-//       >
-//         View
-//       </Button>
-//     </CardContent>
-//   </Card>
-//   )
-// }
-
-// export default ProductCard
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Tag, ArrowUpRight, Layers, Box, DollarSign } from "lucide-react";
+import { Package, Layers, Box, ArrowUpRight } from "lucide-react";
 
 function ProductCard({ product }) {
   const navigate = useNavigate();
 
-  // Extracting first variant data safely
-  const firstVariant = product.variants?.[0] || {};
-  const price = firstVariant.price
-    ? `${firstVariant.price.toLocaleString()} MMK`
-    : "0 MMK";
-  const stock = firstVariant.available_stock ?? 0;
+  // Updated to calculate using remaining_stock first, falling back to initial_stock
+  const totalStock =
+    product.variants?.reduce((sum, variant) => {
+      return sum + (variant.remaining_stock ?? variant.initial_stock ?? 0);
+    }, 0) ?? 0;
 
   return (
     <div
       onClick={() => navigate(`/admin/products/${product?._id}`)}
-      className="bg-white p-5 py-4 border-b rounded-xl border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-100/70 transition-all flex items-start gap-4 cursor-pointer group"
+      className="bg-white p-3.5 border border-slate-100 rounded-xl hover:border-slate-200 hover:shadow-sm active:scale-[0.99] transition-all cursor-pointer group flex flex-col justify-between min-h-[140px] md:min-h-0"
     >
-      {/* 1. Circular Icon Section (Replacing large image) */}
       <div>
-        <div className=" flex  items-center gap-2.5 mb-2">
-          <div className="relative mt-1 flex-shrink-0 w-11 h-11  rounded-md overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center">
+        {/* Main Content Layout: Row on Mobile, Column on Desktop */}
+        <div className="flex flex-row md:flex-col gap-3 items-start w-full">
+          
+          {/* Product Image Wrapper */}
+          <div className="relative flex-shrink-0 w-20 h-20 md:w-full md:h-40 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center">
             {product.image ? (
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
-              <Package className="h-5 w-5 text-slate-400" />
+              <Package className="h-6 w-6 text-slate-300" />
             )}
-          </div>
-          <div className="flex flex-col gap-1 ">
-            <div className="flex items-center gap-2.5 ">
-              <h3 className="font-semibold text-slate-900 text-[14px] truncate leading-tight">
-                {product.name}
-              </h3>
+            
+            {/* Quick Action visual indicator on hover (Desktop only) */}
+            <div className="absolute top-2 right-2 bg-white/90 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hidden md:block border border-slate-100 shadow-sm">
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-600" />
             </div>
+          </div>
 
-            <span
-              className={`text-[10px] uppercase font-bold rounded-full `}
-            >
-              <span className=" text-slate-400"> Category :</span>{" "}
-              {product.category_id?.name || "General"}
-            </span>
+          {/* Text & Meta Information Block */}
+          <div className="flex flex-col gap-1 w-full min-w-0 md:mt-1">
+            <h3 className="font-semibold text-slate-800 text-sm truncate group-hover:text-pink-600 transition-colors">
+              {product.name}
+            </h3>
+
+            {/* Categorization & Pricing Row */}
+            <div className="flex flex-col gap-0.5 md:flex-row md:items-center md:justify-between md:gap-2 mt-0.5">
+              <div className="text-[10px] uppercase font-bold text-slate-500 truncate">
+                <span className="text-slate-400 font-medium">Cat:</span>{" "}
+                {product.category_id?.name || "General"}
+              </div>
+
+              <div className="text-[10px] uppercase font-bold text-slate-700">
+                <span className="text-slate-400 font-medium">Cost:</span>{" "}
+                {product.total_cost ? `${product.total_cost} K` : "0 MMK"}
+              </div>
+            </div>
           </div>
         </div>
-
-       
-          <div className="flex w-full  items-center justify-between gap-6 border-t pt-2 border-slate-100 text-gray-500 text-[11px]">
-           
-            <div className="flex items-center gap-1.5">
-              <Box
-                className={`h-3.5 w-3.5 ${
-                  stock < 5 ? "text-red-500" : "text-gray-400"
-                }`}
-              />
-              <span
-                className={`font-medium ${
-                  stock < 5 ? "text-red-500" : "text-slate-700"
-                }`}
-              >
-                {stock} stocks
-              </span>
-            </div>
-
-            {/* Variants Info */}
-            <div className="flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-gray-400" />
-              <span>{product.variants?.length || 0} Variants</span>
-            </div>
-
-            {/* Price Info */}
-            <div className="flex items-center gap-1.5 ml-auto">
-              <DollarSign className="h-3.5 w-3.5 text-slate-900" />
-              <span className="text-slate-900 font-bold text-[13px]">
-                {price}
-              </span>
-            </div>
-          </div>
-       
       </div>
 
-    
+      {/* Footer Meta Section */}
+      <div className="flex w-full items-center justify-between gap-2 border-t pt-2.5 mt-3 border-slate-100 text-slate-500 text-[11px]">
+        {/* Stock Status Badge */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Box
+            className={`h-3.5 w-3.5 flex-shrink-0 ${
+              totalStock === 0 ? "text-red-400" : totalStock < 5 ? "text-amber-500" : "text-slate-400"
+            }`}
+          />
+          <span
+            className={`font-semibold truncate ${
+              totalStock === 0 ? "text-red-500" : totalStock < 5 ? "text-amber-600" : "text-slate-600"
+            }`}
+          >
+            {totalStock === 0
+              ? "Out of Stock"
+              : totalStock < 5
+              ? `Low Stock (${totalStock})`
+              : `${totalStock} Available`}
+          </span>
+        </div>
 
-      
-       
+        <div className="flex items-center gap-1 flex-shrink-0 text-slate-400 font-medium">
+          <Layers className="h-3.5 w-3.5" />
+          <span>{product.variants?.length || 0} Varients</span>
+        </div>
+      </div>
     </div>
   );
 }

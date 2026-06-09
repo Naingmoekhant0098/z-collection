@@ -9,9 +9,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "../../../components/ui/breadcrumb";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
 import CustomPagination from "../../../components/pagination/pagination";
 import customToast from "../../../components/customToast";
-import OrderCard from "./order_card"; // The component above
+import OrderCard from "./order_card";
 import { DatePickerWithRange } from "../../../components/admin/products/components/date_picker";
 import { format, set } from "date-fns";
 import { OrderService } from "../../../services/OrderService";
@@ -22,8 +29,8 @@ import OrderCardSkeleton from "./order_loading";
 export function OrderTable() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("ongoing"); // ongoing | history
-  const [filter, setFilter] = useState("all"); // all | current | awaiting
+  const [activeTab, setActiveTab] = useState("ongoing");
+  const [filter, setFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
@@ -44,7 +51,7 @@ export function OrderTable() {
       if (response.data?.success) {
         setOrders(response.data?.data?.orders || []);
         setTotalPage(response?.data?.data?.totalPages || 1);
-        
+
         setIsLoading(false);
       }
     } catch (err) {
@@ -53,42 +60,36 @@ export function OrderTable() {
     }
   };
 
-    const generateExcel = async () => {
-      try {
-        
-        const fromStr = date?.from ? format(date?.from, "yyyy-MM-dd") : undefined;
-        const toStr = date?.to ? format(date?.to, "yyyy-MM-dd") : undefined;
-        const blob = await await OrderService().generateExcelProduct({
-          fromDate: fromStr,
-          toDate: toStr,
-          search: searchText,
-          status: filter !== "all" ? filter : undefined,
-        });
-        const url = window.URL.createObjectURL(new Blob([blob]));
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", `Inventory_Report_${Date.now()}.xlsx`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        // setIsExporting(false);
-      } catch (error) {
-        // setIsExporting(false);
-        console.log(error);
-        customToast.error("Export Failed", "Could not generate Excel file");
-      }
-    };
-
-
-
+  const generateExcel = async () => {
+    try {
+      const fromStr = date?.from ? format(date?.from, "yyyy-MM-dd") : undefined;
+      const toStr = date?.to ? format(date?.to, "yyyy-MM-dd") : undefined;
+      const blob = await await OrderService().generateExcelProduct({
+        fromDate: fromStr,
+        toDate: toStr,
+        search: searchText,
+        status: filter !== "all" ? filter : undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Inventory_Report_${Date.now()}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.log(error);
+      customToast.error("Export Failed", "Could not generate Excel file");
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
   }, [page, searchText, filter, activeTab, date]);
 
   return (
-    <div className="">
+    <div className=" mt-10 md:mt-0">
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -102,13 +103,125 @@ export function OrderTable() {
       </Breadcrumb>
 
       <div className="">
-        <div className=" flex items-center justify-between ">
-          <DatePickerWithRange date={date} setDate={setDate} />
+        <div className=" flex items-center  flex-wrap-reverse gap-3 justify-end md:justify-between ">
+          <div className=" grid grid-cols-2 md:grid-cols-4 flex-wrap gap-2">
+            <DatePickerWithRange date={date} setDate={setDate} />
+
+            <Select
+            // value={formData.payment_method}
+            // onValueChange={(val) => setFormData({ ...formData, payment_method: val })}
+            >
+              <SelectTrigger className="w-full h-10 text-xs text-slate-700 border-slate-200 rounded-lg bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all outline-none">
+                <SelectValue placeholder="Select Method" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg shadow-sm border-slate-100">
+                <SelectItem
+                  value="COD"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  Cash on Delivery (COD)
+                </SelectItem>
+                <SelectItem
+                  value="cash"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  Cash
+                </SelectItem>
+                <SelectItem
+                  value="kpay"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  KPay
+                </SelectItem>
+                <SelectItem
+                  value="wave"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  Wave Pay
+                </SelectItem>
+                <SelectItem
+                  value="banking"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  Mobile Banking
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+            // value={formData.status}
+            // onValueChange={(val) => setFormData({ ...formData, status: val })}
+            >
+              <SelectTrigger className="w-full h-10 text-xs text-slate-700 border-slate-200 rounded-lg bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all outline-none">
+                <SelectValue placeholder="Select Fulfillment Status" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg shadow-sm border-slate-100">
+                <SelectItem
+                  value="pending"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />{" "}
+                    Pending
+                  </span>
+                </SelectItem>
+                <SelectItem
+                  value="delivered"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{" "}
+                    Delivered
+                  </span>
+                </SelectItem>
+                <SelectItem
+                  value="cancelled"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />{" "}
+                    Cancelled
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+            // value={formData.payment_status}
+            // onValueChange={(val) => setFormData({ ...formData, payment_status: val })}
+            >
+              <SelectTrigger className="w-full h-10 text-xs text-slate-700 border-slate-200 rounded-lg bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all outline-none">
+                <SelectValue placeholder="Select Financial Status" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg shadow-sm border-slate-100">
+                <SelectItem
+                  value="unpaid"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />{" "}
+                    Unpaid
+                  </span>
+                </SelectItem>
+                <SelectItem
+                  value="paid"
+                  className="text-xs text-slate-700 cursor-pointer"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{" "}
+                    Paid
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* <DatePickerWithRange date={date} setDate={setDate} />
+          <DatePickerWithRange date={date} setDate={setDate} /> */}
 
           <div className=" flex gap-1">
             <Button
               onClick={() => {
-                  generateExcel();
+                generateExcel();
               }}
               className="bg-emerald-600 text-white font-normal rounded-4xl py-2! text-xs"
             >
@@ -126,9 +239,8 @@ export function OrderTable() {
             </Button>
           </div>
         </div>
-        {/* Search and Date */}
         <div className="pb-4 flex flex-col md:flex-row  mt-2 gap-1">
-          <div className="flex gap-2 py-3 overflow-x-auto no-scrollbar">
+          {/* <div className="flex gap-2 py-3 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setFilter("all")}
               className={`px-4 py-1.5 rounded-full text-xs font-medium border ${
@@ -148,7 +260,6 @@ export function OrderTable() {
               }`}
             >
               Paid
-            
             </button>
             <button
               onClick={() => setFilter("unpaid")}
@@ -159,11 +270,10 @@ export function OrderTable() {
               }`}
             >
               Unpaid
-               
             </button>
-          </div>
+          </div> */}
 
-          <div className="relative flex-1">
+          {/* <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search orders..."
@@ -171,20 +281,23 @@ export function OrderTable() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
-          </div>
+          </div> */}
         </div>
 
-        <div className=" flex flex-col gap-3 mt-2 ">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
           {isLoading ? (
-            <div className="space-y-2">
-              {[...Array(10)].map((_, i) => (
-                <OrderCardSkeleton key={i} />
-              ))}
-            </div>
+            [...Array(9)].map((_, i) => <OrderCardSkeleton key={i} />)
           ) : orders.length > 0 ? (
-            orders.map((order) => <OrderCard key={order._id} order={order} />)
+            orders.map((order) => (
+              <OrderCard
+                key={order._id}
+                order={order}
+                // onDelete={(targetOrder) => handleYourDeleteModal(targetOrder)}
+                // onEdit={(orderId) => handleYourEditRedirect(orderId)}
+              />
+            ))
           ) : (
-            <div className="py-20 text-center text-gray-400 text-sm">
+            <div className="col-span-1 md:col-span-2 lg:col-span-3 py-20 text-center text-gray-400 text-sm bg-white border border-slate-100 rounded-xl">
               No orders found
             </div>
           )}

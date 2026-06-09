@@ -54,7 +54,7 @@ export function AdminLogin() {
         if (response?.status && response?.statusCode == 200) {
           customToast.success("Congratulation", response.data.message);
           Cookies.set("token", response.data?.data?.token);
-          console.log(Cookies.get('token'))
+          console.log(Cookies.get("token"));
           setIsLoading(false);
           navigate("/");
         }

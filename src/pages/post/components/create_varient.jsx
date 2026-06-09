@@ -26,52 +26,62 @@ import {
   Shirt,
 } from "lucide-react";
 import customToast from "../../../components/customToast/index";
+
 export function ProductVariantDialog({
   isOpen,
   handleClose,
-  handleSubmit,
   type = "create",
-  selectedVariant,
+  variantData, // Unified naming with the parent component
   submitVariant,
 }) {
   const [formData, setFormData] = useState({
     size: "",
     color: "",
-    stock: "",
-    buy_price: "",
+    initial_stock: "",
+    remaining_stock: "",
     price: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sync modal internal fields when open, changing modes, or loading an existing variant
   useEffect(() => {
-    if (selectedVariant) {
-      setFormData({
-        ...selectedVariant,
-        price: selectedVariant.price || "",
-        buy_price: selectedVariant.buy_price || "",
-      });
-    } else {
-      setFormData({
-        size: "",
-        color: "",
-        stock: "",
-        buy_price: "",
-        price: "",
-      });
+    if (isOpen) {
+      if (type === "edit" && variantData) {
+        // Safe mapping with cross-compatibility fallbacks (stock vs remaining_stock)
+        const currentStock = variantData.remaining_stock ?? variantData.initial_stock ?? variantData.stock ?? "";
+        setFormData({
+          size: variantData.size || "",
+          color: variantData.color || "",
+          price: variantData.price || "",
+          initial_stock: variantData.initial_stock ?? currentStock,
+          remaining_stock: currentStock,
+        });
+      } else {
+        // Reset state clearly on dynamic clean creations
+        setFormData({
+          size: "",
+          color: "",
+          initial_stock: "",
+          remaining_stock: "",
+          price: "",
+        });
+      }
     }
-  }, [selectedVariant, isOpen]);
+  }, [variantData, isOpen, type]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    setFormData((prev) => {
+      const updatedData = { ...prev, [name]: value };
+      
+      // Mirror values to initial_stock ONLY during new entries setup
+      if (type === "create" && name === "remaining_stock") {
+        updatedData.initial_stock = value;
+      }
+      return updatedData;
+    });
   };
-
-
-  const unitProfit =
-    (Number(formData.price) || 0) - (Number(formData.buy_price) || 0);
-  const totalPotentialProfit = unitProfit * (Number(formData.stock) || 0);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -80,15 +90,22 @@ export function ProductVariantDialog({
     if (
       !formData.size ||
       !formData.color ||
-      !formData.price ||
-      !formData.buy_price ||
-      !formData.stock
+      formData.price === "" ||
+      formData.remaining_stock === ""
     ) {
       customToast.error("Missing Info", "Please fill in all variant details.");
       setIsLoading(false);
       return;
     }
-    submitVariant(formData);
+
+    const payload = {
+      ...formData,
+      price: Number(formData.price),
+      initial_stock: Number(formData.initial_stock || formData.remaining_stock),
+      remaining_stock: Number(formData.remaining_stock),
+    };
+
+    submitVariant(payload);
     setIsLoading(false);
     handleClose();
   };
@@ -101,7 +118,7 @@ export function ProductVariantDialog({
             <div className="flex items-center gap-3">
               <div className="p-2 bg-black/10 rounded-full">
                 {type === "edit" ? (
-                  <Edit3 className="w-5 h-5 text-pink-400" />
+                  <Edit3 className="w-4 h-4 text-pink-400" />
                 ) : (
                   <Shirt className="w-4 h-4 " />
                 )}
@@ -119,11 +136,8 @@ export function ProductVariantDialog({
                   Size
                 </Label>
                 <div className="relative">
-                  
                   <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4 z-10" />
-
                   <Select
-                   
                     value={formData.size}
                     onValueChange={(value) =>
                       setFormData((prev) => ({ ...prev, size: value }))
@@ -164,15 +178,15 @@ export function ProductVariantDialog({
 
             <div className="space-y-2">
               <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
-                Available Stock
+                {type === "edit" ? "Remaining Stock" : "Initial Stock"}
               </Label>
               <div className="relative">
                 <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
-                  name="stock"
+                  name="remaining_stock"
                   type="number"
                   placeholder="Quantity in hand"
-                  value={formData.stock}
+                  value={formData.remaining_stock}
                   onChange={handleInputChange}
                   className="pl-10 h-10 border-slate-200 text-sm rounded-xl focus-visible:ring-pink-200"
                 />
@@ -181,27 +195,7 @@ export function ProductVariantDialog({
 
             <div className="space-y-2">
               <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
-                Buy Price (MMK)
-              </Label>
-              <div className="relative">
-                <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                <Input
-                  name="buy_price"
-                  type="number"
-                  placeholder="e.g. 40"
-                  value={formData.buy_price}
-                  onChange={handleInputChange}
-                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                  .000 K
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
-                Sell Price (MMK)
+                Price (MMK)
               </Label>
               <div className="relative">
                 <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
@@ -214,31 +208,10 @@ export function ProductVariantDialog({
                   className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                  .000 K
+                  .000 Ks
                 </span>
               </div>
             </div>
-
-            {formData.stock > 0 && (
-              <div className="mt-2 p-3 py-2 rounded-xl bg-pink-50 border border-pink-100 flex justify-between items-center">
-                <div className="flex flex-col">
-                  <span className="text-[8px] font-bold text-pink-600 uppercase">
-                    Potential Profit
-                  </span>
-                  <span className="text-[14px] font-semibold text-pink-700">
-                    {totalPotentialProfit.toLocaleString()} K
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[8px] block font-medium text-pink-500">
-                    Margin/Unit
-                  </span>
-                  <span className="text-xs font-semibold text-pink-600">
-                    {unitProfit > 0 ? `+${unitProfit}K` : `${unitProfit}K`}
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="p-6 pt-2 bg-white">

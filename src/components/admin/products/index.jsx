@@ -182,21 +182,14 @@ export function ProductTable() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 w-full md:grid-cols-3 mb-4 lg:grid-cols-4 gap-3">
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(10)].map((_, i) => (
-              <OrderCardSkeleton key={i} />
+      <div className="grid grid-cols-1 w-full md:grid-cols-3 lg:grid-cols-3 gap-3 mb-4">
+        {isLoading
+          ? [...Array(10)].map((_, i) => <OrderCardSkeleton key={i} />)
+          : products.map((product) => (
+              <ProductCard key={product._id} product={product} />
             ))}
-          </div>
-        ) : products.length > 0 ? (
-          products.map((product) => <ProductCard product={product} />)
-        ) : (
-          <div className="py-20 text-center text-gray-400 text-sm">
-            No products found
-          </div>
-        )}
       </div>
+
       <CustomPagination
         currentPage={current}
         totalPages={totalPage}

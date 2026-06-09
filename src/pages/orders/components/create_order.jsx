@@ -1,5 +1,7 @@
+
+
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";  
 import {
   ArrowLeft,
   Trash2,
@@ -11,7 +13,6 @@ import {
   Plus,
 } from "lucide-react";
 
-// Shadcn UI Components (Assuming standard paths)
 import { cn } from "../../../lib/utils";
 import { Button } from "../../../components/ui/button";
 import {
@@ -45,26 +46,31 @@ import {
 
 import customToast from "../../../components/customToast";
 import { ProductService } from "../../../services/PostService";
-import { Input } from "../../../components/ui/input";
 import { OrderService } from "../../../services/OrderService";
 import LoadingOverlay from "../../../components/Loading";
 
-function CreateOrder() {
+function CreateOrEditOrder() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = !!id;
+
   const [allProducts, setAllProducts] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingOrder, setIsFetchingOrder] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     address: "",
+    city: "",
     total_amount: 0,
     items: [],
     payment_method: "cash",
-    payment_status: "",
+    payment_status: "unpaid",
     royal_order_number: "",
+    status: "pending",
   });
 
   useEffect(() => {
@@ -75,9 +81,59 @@ function CreateOrder() {
     loadProducts();
   }, []);
 
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchOrderDetails = async () => {
+      setIsFetchingOrder(true);
+      try {
+        const res = await OrderService().getById(id);
+        if (res?.data?.success) {
+          const order = res.data.data;
+          setFormData({
+            name: order?.customer_id?.name || "",
+            phone: order?.customer_id?.phone || "",
+            address: order?.address || "",
+            city: order?.city || "",
+            total_amount: order?.total_amount || 0,
+            payment_method: order?.payment_method || "cash",
+            payment_status: order?.payment_status || "unpaid",
+            status: order?.status || "pending",
+            royal_order_number: order?.royal_order_number || "",
+            items: (order?.items || []).map((item) => ({
+              product_id: item.product_id,
+              name: item.name,
+              image: item.image,
+              variant_id: item.variant_id,
+              size: item.size,
+              color: item.color,
+              price: item.price,
+              quantity: item.quantity,
+              // Fallback dynamically bounds stock constraint boundaries
+              max_stock: item.max_stock || item.quantity + 20,
+            })),
+          });
+        } else {
+          customToast.error("Error", "Could not load order information.");
+        }
+      } catch (error) {
+        console.error("Fetch Order Details Error:", error);
+        customToast.error("Server Error", "Failed to retrieve order metadata.");
+      } finally {
+        setIsFetchingOrder(false);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [id, isEditMode]);
+
   const handleAddVariant = (variant) => {
     const exists = formData.items.find((i) => i.variant_id === variant._id);
     if (exists) return customToast.error("Already added to order");
+
+    const maxStock = variant.remaining_stock ?? 0;
+    if (maxStock <= 0)
+      return customToast.error("This variant is completely out of stock");
 
     setFormData((prev) => ({
       ...prev,
@@ -85,12 +141,14 @@ function CreateOrder() {
         ...prev.items,
         {
           product_id: selectedProduct._id,
-          product_name: selectedProduct.name,
+          name: selectedProduct.name,
+          image: selectedProduct.image,
           variant_id: variant._id,
           size: variant.size,
           color: variant.color,
           price: variant.price,
           quantity: 1,
+          max_stock: maxStock,
         },
       ],
     }));
@@ -99,7 +157,17 @@ function CreateOrder() {
 
   const updateQty = (index, delta) => {
     const newItems = [...formData.items];
-    const newQty = newItems[index].quantity + delta;
+    const targetItem = newItems[index];
+    const newQty = targetItem.quantity + delta;
+
+    if (delta > 0 && newQty > targetItem.max_stock) {
+      customToast.error(
+        "Stock Limit Reached",
+        `Only ${targetItem.max_stock} units available.`
+      );
+      return;
+    }
+
     if (newQty > 0) {
       newItems[index].quantity = newQty;
       setFormData({ ...formData, items: newItems });
@@ -118,7 +186,6 @@ function CreateOrder() {
   const handleSaveOrder = async (e) => {
     e?.preventDefault?.();
 
-    console.log(formData);
     if (
       !formData?.name ||
       !formData?.phone ||
@@ -137,12 +204,15 @@ function CreateOrder() {
       return;
     }
 
-    if (!formData.payment_method) {
-      customToast.error(
-        "Missing Payment Method",
-        "Please select a payment method."
-      );
-      return;
+    // Guardrail stock limit checks
+    for (const item of formData.items) {
+      if (item.quantity > item.max_stock) {
+        customToast.error(
+          "Invalid Order Quantity",
+          `${item.name} (${item.size}/${item.color}) exceeds available stock.`
+        );
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -163,32 +233,44 @@ function CreateOrder() {
         royal_order_number: formData?.royal_order_number,
       };
 
-      const res = await OrderService().createTwo(payload);
+      let res;
+      if (isEditMode) {
+        res = await OrderService().updateById(id, payload);
+      } else {
+        // Standard create execution pipeline
+        res = await OrderService().createTwo(payload);
+      }
 
       if (res?.data?.success) {
-        customToast.success("Success", "Order saved successfully!");
+        customToast.success(
+          "Success",
+          isEditMode
+            ? "Order updated successfully!"
+            : "Order saved successfully!"
+        );
 
         setFormData({
-          customer: {
-            name: "",
-            phone: "",
-            address: "",
-            city: "",
-          },
+          name: "",
+          phone: "",
+          address: "",
+          city: "",
           items: [],
           total_amount: 0,
           payment_method: "",
-          status: "pending",
-          payment_status: "unpaid",
+          status: "",
+          payment_status: "",
           royal_order_number: "",
         });
-
+        setSelectedProduct(null);
         navigate("/admin/orders");
       } else {
-        customToast.error("Save Failed", res?.message || "Error saving order.");
+        customToast.error(
+          "Save Failed",
+          res?.message || "Error processing your request."
+        );
       }
     } catch (error) {
-      console.error("Order Save Error:", error);
+      console.error("Order Action Submission Error:", error);
       customToast.error("Server Error", "Something went wrong.");
     } finally {
       setIsLoading(false);
@@ -196,7 +278,7 @@ function CreateOrder() {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto mt-12 md:mt-0 bg-slate-50/50">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex flex-col gap-4">
           <Breadcrumb>
@@ -210,94 +292,109 @@ function CreateOrder() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Create Order</BreadcrumbPage>
+                <BreadcrumbPage>
+                  {isEditMode ? "Edit Order" : "Create Order"}
+                </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
 
-          {isLoading && <LoadingOverlay message="Creating Order..." />}
+          {isLoading && (
+            <LoadingOverlay
+              message={isEditMode ? "Updating Order..." : "Creating Order..."}
+            />
+          )}
+          {isFetchingOrder && (
+            <LoadingOverlay message="Fetching Order Details..." />
+          )}
 
           <div className="flex items-center justify-between">
             <div
               onClick={() => navigate(-1)}
-              className="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 gap-1.5 text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer hover:bg-white transition-all group"
+              className="p-2 bg-white rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0 mt-0.5 shadow-xs"
             >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              <span>Cancel</span>
+              <ArrowLeft className="w-4 h-4" />
             </div>
+
             <button
               onClick={handleSaveOrder}
-              className="flex items-center gap-2 bg-main text-white px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 transition-colors shadow-sm"
+              disabled={isFetchingOrder}
+              className="flex items-center gap-2 bg-main text-white px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
             >
-              <Save className="w-4 h-4" /> Save Order
+              <Save className="w-4 h-4" />{" "}
+              {isEditMode ? "Update Order" : "Save Order"}
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 -mt-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 -mt-1">
           <div className="lg:col-span-1 space-y-4">
-            <div className="p-3 rounded-xl border border-slate-300 space-y-2 bg-transparent">
-              <h2 className="text-sm font-bold mb-2 uppercase tracking-wider text-slate-900">
+            <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-sm">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                 Customer Info
               </h2>
-              <div className=" pt-3 mt-1 border-t border-slate-200 space-y-2">
+              <div className="pt-2 border-t border-slate-100 space-y-3">
                 <div className="space-y-1">
-                  <label className="text-xs  uppercase font-semibold text-slate-700">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
                     Full Name
                   </label>
                   <input
+                    value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full mt-1 p-2.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
+                    className="w-full p-2.5 text-xs border border-slate-200 bg-slate-50/50 rounded-lg focus:bg-white focus:ring-2 focus:ring-pink-100 outline-none transition-all"
                     placeholder="e.g. Juan Weber"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs uppercase font-semibold text-slate-700">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
                     Phone
                   </label>
                   <input
+                    value={formData.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className="w-full mt-1 p-2.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
+                    className="w-full p-2.5 text-xs border border-slate-200 bg-slate-50/50 rounded-lg focus:bg-white focus:ring-2 focus:ring-pink-100 outline-none transition-all"
                     placeholder="09..."
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs uppercase font-semibold text-slate-700">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
                     City
                   </label>
                   <input
+                    value={formData.city}
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
-                    className="w-full mt-1 p-2.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
+                    className="w-full p-2.5 text-xs border border-slate-200 bg-slate-50/50 rounded-lg focus:bg-white focus:ring-2 focus:ring-pink-100 outline-none transition-all"
                     placeholder="City"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs uppercase font-semibold text-slate-700">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
                     Address
                   </label>
                   <textarea
+                    value={formData.address}
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })
                     }
-                    rows="4"
-                    className="w-full mt-1 p-2.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
+                    rows="3"
+                    className="w-full p-2.5 text-xs border border-slate-200 bg-slate-50/50 rounded-lg focus:bg-white focus:ring-2 focus:ring-pink-100 outline-none transition-all"
                     placeholder="Shipping address..."
                   />
                 </div>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl border border-slate-300 space-y-3 ">
-              <h2 className="text-sm font-bold uppercase tracking-wider">
+            <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-sm">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                 Select Product
               </h2>
               <Popover open={open} onOpenChange={setOpen}>
@@ -306,7 +403,7 @@ function CreateOrder() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between text-xs h-10 border-slate-300 rounded-lg font-normal"
+                    className="w-full justify-between text-xs h-10 border-slate-200 rounded-lg font-normal bg-slate-50/50 hover:bg-white transition-all"
                   >
                     {selectedProduct
                       ? selectedProduct.name
@@ -357,109 +454,141 @@ function CreateOrder() {
             </div>
           </div>
 
-          <div className="lg:col-span-2 space-y-3">
+          <div className="lg:col-span-2 space-y-4">
             {selectedProduct && (
-              <div className="p-3 rounded-xl border border-slate-300 space-y-3  animate-in fade-in slide-in-from-top-1">
-                <h2 className="text-sm font-bold uppercase tracking-wider">
+              <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-sm animate-in fade-in slide-in-from-top-1">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                   Choose Variants
                 </h2>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 pt-3 mt-1 border-t border-slate-300 gap-2">
-                  {selectedProduct.variants.map((v) => (
-                    <button
-                      key={v._id}
-                      onClick={() => handleAddVariant(v)}
-                      className="p-2 hover:bg-gray-50 active:bg-gray-100/70 border flex justify-between items-center border-slate-300 rounded-lg hover:border-slate-900 text-left transition-all group "
-                    >
-                      <div>
-                        <p className="text-[10px] font-bold  uppercase tracking-tighter mb-1">
-                          {v.size} / {v.color}
+                <div className="grid grid-cols-2 md:grid-cols-4 pt-2 border-t border-slate-100 gap-2">
+                  {selectedProduct.variants.map((v) => {
+                    const isOutOfStock = (v.remaining_stock ?? 0) <= 0;
+
+                    return (
+                      <button
+                        key={v._id}
+                        type="button"
+                        disabled={isOutOfStock}
+                        onClick={() => handleAddVariant(v)}
+                        className={`p-2 border flex justify-between items-center rounded-lg text-left transition-all group ${
+                          isOutOfStock
+                            ? "bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed"
+                            : "hover:bg-gray-50 active:bg-gray-100/70 border-slate-200 hover:border-slate-900 cursor-pointer"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1 pr-1">
+                          <p
+                            className={`text-[10px] font-bold uppercase tracking-tighter mb-0.5 truncate ${
+                              isOutOfStock
+                                ? "text-slate-400 line-through"
+                                : "text-slate-900"
+                            }`}
+                          >
+                            {v.size} / {v.color}
+                          </p>
+                          <p
+                            className={`text-[9px] font-medium ${
+                              isOutOfStock
+                                ? "text-red-500 font-semibold"
+                                : "text-slate-500"
+                            }`}
+                          >
+                            {isOutOfStock
+                              ? "❌ Out of stock"
+                              : `${v.remaining_stock} items`}
+                          </p>
+                        </div>
+                        <p
+                          className={`text-xs font-bold whitespace-nowrap ${
+                            isOutOfStock ? "text-slate-400" : "text-slate-900"
+                          }`}
+                        >
+                          {v.price}Ks
                         </p>
-                        <p className="text-[9px] text-slate-500">
-                          {v.stock} items in stock
-                        </p>
-                      </div>
-                      <p className="text-xs font-medium text-slate-900 mt-0.5">
-                        {v.price}Ks
-                      </p>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
-            <div className="p-4 rounded-xl border border-slate-300 space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-50">
+
+            <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-4 shadow-sm">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-slate-900" />
+                  <ShoppingBag className="w-4 h-4 text-slate-800" />
                   <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                     Order items
                   </h2>
                 </div>
               </div>
 
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                 {formData.items.length > 0 ? (
                   formData.items.map((item, index) => (
                     <div
                       key={index}
-                      className="group relative  rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all"
+                      className="group p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 shadow-xs transition-all"
                     >
-                      <div className="flex gap-2">
+                      <div className="flex gap-3 items-center">
                         <div className="relative shrink-0">
                           <img
                             src={
                               item.image ||
                               "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop"
                             }
-                            className="w-14 h-14 rounded-xl object-cover bg-slate-100 border border-slate-100"
+                            className="w-12 h-12 rounded-lg object-cover bg-slate-50 border border-slate-100"
                             alt={item.name}
                           />
                         </div>
 
                         <div className="flex-1 flex flex-col justify-between min-w-0">
-                          <div className="flex justify-between items-start">
+                          <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                              <h3 className="text-sm font-bold text-slate-900 truncate tracking-tight">
+                              <h3 className="text-xs font-bold text-slate-800 truncate tracking-tight">
                                 {item.name}
                               </h3>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <span className="text-[9px]   font-semibold px-1.5 py-0.5 rounded uppercase  ">
-                                  {item.size}/ {item.color}
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[9px] font-bold text-slate-500 uppercase">
+                                  Size: {item.size} / Color: {item.color}
                                 </span>
-                                <p className="text-[9px] text-slate-500 font-medium">
-                                  {item.price}Ks / unit
-                                </p>
+                                <span className="text-[9px] text-slate-400 font-medium">
+                                  ({item.price} Ks/unit)
+                                </span>
                               </div>
                             </div>
 
-                            <div className="text-right">
-                              <p className="text-sm  font-semibold text-slate-900">
-                                {(item.price * item.quantity).toLocaleString()}
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-xs font-bold text-slate-900">
+                                {(item.price * item.quantity).toLocaleString()}{" "}
                                 Ks
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between mt-3">
-                            <div className="flex items-center bg-slate-100/50 rounded-lg p-0.5 border border-slate-200/60">
+                          <div className="flex items-center justify-between mt-2.5">
+                            <div className="flex items-center bg-slate-50 rounded-md p-0.5 border border-slate-100">
                               <button
+                                type="button"
                                 onClick={() => updateQty(index, -1)}
-                                className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white rounded-md transition-all"
+                                className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white rounded transition-all"
                               >
-                                <Minus className="w-3 h-3" />
+                                <Minus className="w-2.5 h-2.5" />
                               </button>
-                              <span className="w-8 text-center text-[11px] font-bold text-slate-800">
+                              <span className="w-7 text-center text-[11px] font-bold text-slate-700">
                                 {item.quantity}
                               </span>
                               <button
+                                type="button"
                                 onClick={() => updateQty(index, 1)}
-                                className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white rounded-md transition-all"
+                                className="w-5 h-5 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-white rounded transition-all"
                               >
-                                <Plus className="w-3 h-3" />
+                                <Plus className="w-2.5 h-2.5" />
                               </button>
                             </div>
 
                             <button
+                              type="button"
                               onClick={() =>
                                 setFormData({
                                   ...formData,
@@ -468,7 +597,7 @@ function CreateOrder() {
                                   ),
                                 })
                               }
-                              className="flex items-center gap-1.5 text-[10px] font-semibold text-red-600 hover:text-rose-500 transition-colors uppercase tracking-wider"
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -478,9 +607,9 @@ function CreateOrder() {
                     </div>
                   ))
                 ) : (
-                  <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-50 rounded-2xl">
-                    <div className="p-3 bg-slate-50 rounded-full mb-3">
-                      <ShoppingBag className="w-6 h-6 text-slate-200" />
+                  <div className="py-10 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    <div className="p-2.5 bg-slate-100 rounded-full mb-2">
+                      <ShoppingBag className="w-5 h-5 text-slate-300" />
                     </div>
                     <p className="text-xs text-slate-400 italic">
                       Your order manifest is empty.
@@ -490,170 +619,190 @@ function CreateOrder() {
               </div>
             </div>
 
-            <div className="p-3 rounded-xl border border-slate-300 space-y-2 bg-transparent">
-              <h2 className="text-sm font-bold mb-2 uppercase tracking-wider text-slate-900">
+            <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-sm">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                 Payment Info
               </h2>
 
-              <div className="space-y-1 pt-2 mt-2 border-t border-slate-300">
-                <label className="text-xs  uppercase font-semibold text-slate-700">
-                  Royal Order Number
-                </label>
-                <input
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      royal_order_number: e.target.value,
-                    })
-                  }
-                  className="w-full mt-1 p-2.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all"
-                  placeholder="e.g. R0000000"
-                />
-              </div>
+              <div className="space-y-3 pt-2 border-t border-slate-100">
+                <div className="space-y-1">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
+                    Royal Order Number
+                  </label>
+                  <input
+                    value={formData.royal_order_number}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        royal_order_number: e.target.value,
+                      })
+                    }
+                    className="w-full p-2.5 text-xs border border-slate-200 bg-slate-50/50 rounded-lg focus:bg-white focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                    placeholder="e.g. R0000000"
+                  />
+                </div>
 
-              <div className="  space-y-1">
-                <label className="text-xs uppercase font-semibold text-slate-700">
-                  Payment Method
-                </label>
-                <Select
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, payment_method: value })
-                  }
-                  value={formData.payment_method}
-                  defaultValue="cash"
-                >
-                  <SelectTrigger className="w-full mt-1 h-9 text-xs border  border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all bg-white">
-                    <SelectValue placeholder="Select Method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash" className="text-xs">
-                      Cash on Delivery
-                    </SelectItem>
-                    <SelectItem value="kpay" className="text-xs">
-                      KPay
-                    </SelectItem>
-                    <SelectItem value="wave" className="text-xs">
-                      Wave Pay
-                    </SelectItem>
-                    <SelectItem value="banking" className="text-xs">
-                      Mobile Banking
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs uppercase font-semibold text-slate-700">
-                  Payment Status
-                </label>
-                <Select
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, payment_status: value })
-                  }
-                  defaultValue="pending"
-                >
-                  <SelectTrigger className="w-full mt-1 h-9 text-xs border rounded-lg focus:ring-2 focus:ring-pink-200 outline-none transition-all bg-white">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending" className="text-xs">
-                      Pending
-                    </SelectItem>
-                    <SelectItem value="paid" className="text-xs">
-                      Paid
-                    </SelectItem>
-                    <SelectItem value="partially_paid" className="text-xs">
-                      Partially Paid
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-1">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
+                    Payment Method
+                  </label>
+                  <Select
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, payment_method: value })
+                    }
+                    value={formData.payment_method}
+                  >
+                    <SelectTrigger className="w-full h-10 text-xs border border-slate-200 rounded-lg bg-slate-50/50 focus:bg-white transition-all">
+                      <SelectValue placeholder="Select Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash" className="text-xs">
+                        Cash on Delivery
+                      </SelectItem>
+                      <SelectItem value="kpay" className="text-xs">
+                        KPay
+                      </SelectItem>
+                      <SelectItem value="wave" className="text-xs">
+                        Wave Pay
+                      </SelectItem>
+                      <SelectItem value="banking" className="text-xs">
+                        Mobile Banking
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
+                    Payment Status
+                  </label>
+                  <Select
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, payment_status: value })
+                    }
+                    value={formData.payment_status}
+                  >
+                    <SelectTrigger className="w-full h-10 text-xs border border-slate-200 rounded-lg bg-slate-50/50 focus:bg-white transition-all">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="paid" className="text-xs">
+                        Paid
+                      </SelectItem>
+                      <SelectItem value="unpaid" className="text-xs">
+                        Unpaid
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
+                    Order Status
+                  </label>
+                  <Select
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, status: value })
+                    }
+                    value={formData.status}
+                  >
+                    <SelectTrigger className="w-full h-10 text-xs border border-slate-200 rounded-lg bg-slate-50/50 focus:bg-white transition-all">
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending" className="text-xs">
+                        Pending
+                      </SelectItem>
+                      <SelectItem value="delivered" className="text-xs">
+                        Delivered
+                      </SelectItem>
+                      <SelectItem value="cancelled" className="text-xs">
+                        Cancelled
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-300 ">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-4">
+            <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-3">
                 Order Summary
               </h2>
 
-              <div className=" pt-4   border-t border-slate-300 space-y-3">
-                <div className="flex justify-between items-start text-[11px]">
-                  <span className="text-slate-400 uppercase   font-medium  tracking-tight">
-                    Customer
-                  </span>
-                  <span className="text-slate-900 font-semibold text-right truncate max-w-[150px]">
+              <div className="pt-3 border-t border-slate-100 space-y-2.5 text-xs">
+                <div className="flex justify-between items-start">
+                  <span className="text-slate-400 font-medium">Customer</span>
+                  <span className="text-slate-800 font-semibold truncate max-w-[180px]">
                     {formData.name || "Not entered"}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 uppercase  font-medium  tracking-tight">
-                    Contact
-                  </span>
-                  <span className="text-slate-900 font-semibold text-right">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-medium">Contact</span>
+                  <span className="text-slate-800 font-semibold">
                     {formData.phone || "—"}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-start text-[11px]">
-                  <span className="text-slate-400 uppercase  font-medium  tracking-tight">
-                    Ship To
-                  </span>
-                  <span className="text-slate-900 font-semibold text-right truncate max-w-[150px] leading-tight">
-                    {formData.address || "No address provided"}
+                <div className="flex justify-between items-start">
+                  <span className="text-slate-400 font-medium">Ship To</span>
+                  <span className="text-slate-800 font-semibold truncate max-w-[180px] leading-tight text-right">
+                    {formData.address
+                      ? `${formData.city ? formData.city + ", " : ""}${
+                          formData.address
+                        }`
+                      : "No address provided"}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 uppercase  font-medium  tracking-tight">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-medium">
                     Royal Number
                   </span>
-                  <span className=" capitalize  font-medium ">
-                    {formData?.royal_order_number || "Not entered"}
+                  <span className="text-slate-800 font-semibold uppercase">
+                    {formData.royal_order_number || "Not entered"}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 uppercase  font-medium  tracking-tight">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-medium">
                     Payment Method
                   </span>
-                  <span className=" capitalize  font-medium ">
-                    {formData.payment_method || "Not entered"}
+                  <span className="text-slate-800 font-semibold uppercase">
+                    {formData.payment_method}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 uppercase  font-medium  tracking-tight">
+
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-medium">
                     Payment Status
                   </span>
-                  <span className=" capitalize  font-medium ">
-                    {formData.payment_status || "Not entered"}
+                  <span className="text-slate-800 font-semibold uppercase">
+                    {formData.payment_status}
                   </span>
                 </div>
 
-                {/* Financials */}
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 uppercase  font-medium  tracking-tight">
-                    Subtotal
-                  </span>
-                  <span className="text-slate-700  font-bold ">
-                    {totalAmount.toLocaleString()}K
+                <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                  <span className="text-slate-400 font-medium">Subtotal</span>
+                  <span className="text-slate-800 font-bold">
+                    {totalAmount.toLocaleString()} Ks
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 uppercase  font-medium  tracking-tight">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-medium">
                     Service Fee
                   </span>
-                  <span className="text-green-600  font-medium ">Free</span>
+                  <span className="text-green-600 font-semibold">Free</span>
                 </div>
 
-                {/* Final Total */}
-                <div className="flex justify-between items-center pt-4 mt-4 border-t border-slate-900 border-dashed">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest leading-none">
-                      Total Payable
-                    </span>
-                  </div>
-                  <span className="text-xl font-semibold text-slate-900 tracking-tighter">
-                    {totalAmount.toLocaleString()}K
+                <div className="flex justify-between items-center pt-3 mt-2 border-t border-slate-900 border-dashed">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Total Payable
+                  </span>
+                  <span className="text-xl font-bold text-slate-900 tracking-tight">
+                    {totalAmount.toLocaleString()} Ks
                   </span>
                 </div>
               </div>
@@ -665,4 +814,4 @@ function CreateOrder() {
   );
 }
 
-export default CreateOrder;
+export default CreateOrEditOrder;

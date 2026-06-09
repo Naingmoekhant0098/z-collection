@@ -8,10 +8,10 @@ export default function AdminLayout({ children }) {
     <div className="min-h-screen bg-pink-50 dark:bg-slate-900">
       <Sidebar />
 
-      <div className="lg:pl-64 flex flex-col min-h-screen">
+      <div className="lg:pl-27 flex flex-col min-h-screen">
         <Header />
 
-        <div className="flex-1  mt-8 p-2 md:p-8">
+        <div className="flex-1  mt-3 p-2 md:p-8">
           <Outlet />
         </div>
       </div>

@@ -1,9 +1,4 @@
- 
-
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogClose,
@@ -13,82 +8,69 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Loader2 } from "lucide-react"
 
-export function DeleteAccountConfirmation({ isOpen, handleClose ,data , type , handleDelete , isDeleteLoading}) {
-    console.log(data)
-  const [agentName, setAgentName] = useState("")
-  const [confirmText, setConfirmText] = useState("")
+export function DeleteAccountConfirmation({ 
+  isOpen, 
+  handleClose, 
+  data, 
+  type, 
+  handleDelete, 
+  isDeleteLoading 
+}) {
    
-
-  const isDeleteEnabled = agentName === data?.name || data?.title || data?.point ||data?.platform && confirmText === `delete my ${type}`
+  const targetName = data?.name || data?.title || data?.royal_order_number || data?.platform || "";
 
   const handleDeleteAccount = () => {
-    if (isDeleteEnabled) {
-        handleDelete(data?.id);
-      handleClose()
-    }
+    handleDelete(data?.id)
+    handleClose()
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Delete {type}</DialogTitle>
-          <DialogDescription className="text-sm text-gray-600 mt-2">
-            Are you sure to delete ?
+      <DialogContent className="sm:max-w-[420px] rounded-3xl p-6 overflow-hidden border-none shadow-2xl">
+        <DialogHeader className="flex flex-col items-center text-center pt-2">
+          
+          <div className="p-3 bg-red-50 rounded-full mb-3 text-red-600 animate-pulse">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          
+          <DialogTitle className="text-xl font-bold text-slate-900">
+            Delete {type}?
+          </DialogTitle>
+          
+          <DialogDescription className="text-sm text-slate-500 mt-2 max-w-[280px]">
+            Are you sure you want to delete <span className="font-semibold text-slate-800">"{targetName}"</span>? 
+            This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 ">
-          <div className="space-y-2">
-            <Label htmlFor="agent-name" className="text-sm font-light">
-              To confirm, type <span className="font-semibold">"{data?.name || data?.title || data?.point || data?.platform}"</span>
-            </Label>
-            <Input
-              id="agent-name"
-              value={agentName}
-              onChange={(e) => setAgentName(e.target.value)}
-              placeholder=""
-              className="w-full py-5"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirm-text" className="text-sm font-light">
-              To confirm, type <span className="font-semibold">"delete my {type}"</span>
-            </Label>
-            <Input
-              id="confirm-text"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder=""
-              className="w-full py-5"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-400 rounded-md">
-            <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
-            <p className="text-sm text-red-800">Deleting {data?.name || data?.title || data?.point || data?.platform} cannot be undone.</p>
-          </div>
-        </div>
-
-        <DialogFooter className="flex justify-end gap-3">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4 sm:justify-center w-full">
           <DialogClose asChild>
-            <Button variant="outline" onClick={handleClose}>
+            <Button 
+              variant="ghost" 
+              onClick={handleClose} 
+              disabled={isDeleteLoading}
+              className="w-full sm:w-28 h-11 rounded-xl text-slate-500 font-medium hover:bg-slate-50"
+            >
               Cancel
             </Button>
           </DialogClose>
+          
           <Button
             variant="destructive"
             onClick={handleDeleteAccount}
-            disabled={!isDeleteEnabled}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            disabled={isDeleteLoading}
+            className="w-full sm:w-32 bg-red-600 hover:bg-red-700 text-white h-11 font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
           >
-            {
-                isDeleteLoading ? "Deleting...." : "Delete Account"
-            }
-         
+            {isDeleteLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Deleting...</span>
+              </>
+            ) : (
+              `Yes, Delete`
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

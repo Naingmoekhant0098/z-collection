@@ -24,7 +24,7 @@ const sidebarItems = [
   { icon: LayoutList, label: "Products", path: "/admin/products" },
   { icon: LayoutList, label: "Categories", path: "/admin/categories" },
   { icon: LayoutList, label: "Orders", path: "/admin/orders" },
-  { icon: Users, label: "Customers", path: "/admin/customers" },
+  { icon: Users, label: "Users", path: "/admin/users" },
 ];
 
 export function Sidebar() {
