@@ -13,7 +13,7 @@ export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
       const res = await OrderService().deleteById(order?._id);
       if (res.data?.success) {
         customToast.success("Order Deleted Successfully");
-        navigate("/admin/orders");
+        navigate("/orders");
       }
     } catch (error) {
       console.error("Error deleting order:", error);
@@ -60,95 +60,105 @@ export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
     : "—";
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-150 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between h-[175px] text-slate-800">
+    <div>
       <DeleteAccountConfirmation
         isOpen={isDeleteShow}
         data={order}
-        handleClose={() => setIsDeleteShow(false)}
+        handleClose={() => {
+          setIsDeleteShow(false);
+        }}
         handleDelete={handleDelete}
       />
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative w-9 h-9 rounded-full bg-amber-100/80 flex items-center justify-center text-amber-600 border border-amber-200/40">
-            <ShoppingBag className="h-4 w-4 fill-amber-500/20" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
-              <div className="w-1 h-1.5 border-r border-b border-white rotate-45 transform -translate-y-[0.5px]" />
+      <div
+        onClick={() => navigate(`/orders/${order._id}`)}
+        className="bg-white p-4 hover:shadow-sm active:scale-[0.99] active:bg-white/10 rounded-3xl border border-slate-200  flex flex-col justify-between text-slate-800"
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative w-9 h-9 rounded-full bg-amber-100/80 flex items-center justify-center text-amber-600 border border-amber-200/40">
+              <ShoppingBag className="h-4 w-4 fill-amber-500/20" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                <div className="w-1 h-1.5 border-r border-b border-white rotate-45 transform -translate-y-[0.5px]" />
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-bold tracking-wider text-xs text-slate-900 leading-tight">
+              {order?.royal_order_number || orderSlug}
+              </h4>
+              <p className="text-[11px] font-mono font-medium text-slate-400 mt-0.5 uppercase">
+                CREATED DATE {formattedDate}
+              </p>
             </div>
           </div>
-
-          <div>
-            <h4 className="font-bold text-xs text-slate-900 leading-tight">
-              Order
-            </h4>
-            <p className="text-[11px] font-mono font-medium text-slate-400 mt-0.5 uppercase">
-              ROYAL NO {order?.royal_order_number || orderSlug}
-            </p>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border tracking-wide ${badge.color}`}
+            >
+              {badge.label}
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border tracking-wide ${badge.color}`}
+        <div className="my-1.5 flex items-center justify-between gap-4">
+          <div>
+            <span className="text-lg font-bold text-slate-900 tracking-tight">
+              {displayAmount}
+            </span>
+            <span className="text-xs font-bold text-slate-900 ml-1">Ks</span>
+          </div>
+          <div className="flex text-[11px]  items-center">
+            <span className=" font-medium">No of dresses :</span>
+            <span className="text-slate-700 font-semibold">
+              {" "}
+              {totalItems} 
+            </span>
+          </div>
+        </div>
+        
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-50"
           >
-            {badge.label}
-          </span>
-        </div>
-      </div>
-      <div className="my-1.5 flex items-center justify-between gap-4">
-        <div>
-          <span className="text-xl font-extrabold text-slate-900 tracking-tight">
-            {displayAmount}
-          </span>
-          <span className="text-xs font-bold text-slate-900 ml-1">Ks</span>
-        </div>
-        <div className="flex text-[11px]  items-center">
-          <span>Number of items : </span>
-          <span className="text-slate-700 font-semibold">{totalItems}</span>
-        </div>
-      </div>
-      <div className="space-y-2.5 pt-2.5 border-t border-slate-100 text-[11px] font-medium text-slate-400">
-        <div className="flex justify-between items-center">
-          <span>Created:</span>
-          <span className="text-slate-700 font-bold">{formattedDate}</span>
-        </div>
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-50"
-        >
-          <span className="text-[10px] text-slate-400 font-normal uppercase tracking-wider">
-            Actions
-          </span>
+            <span className="text-[10px]     uppercase tracking-wider">
+              Actions
+            </span>
 
-          <div className="flex items-center gap-1">
-            {/* View Details Button */}
-            <button
+            <div className="flex items-center gap-1">
+              {/* View Details Button */}
+              {/* <button
               type="button"
               title="View Details"
-              onClick={() => navigate(`/admin/orders/${order._id}`)}
+              onClick={() => navigate(`/orders/${order._id}`)}
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              title="Edit Order"
-              onClick={() => {
-                if (onEdit) onEdit(order._id);
-                else navigate(`/admin/orders/edit/${order._id}`);
-              }}
-              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              title="Delete Order"
-              onClick={() => setIsDeleteShow(true)}
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            </button> */}
+              <button
+                type="button"
+                title="Edit Order"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onEdit) onEdit(order._id);
+                  else navigate(`/admin/orders/edit/${order._id}`);
+                }}
+                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Delete Order"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteShow(true);
+                }}
+                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
+         
       </div>
     </div>
   );

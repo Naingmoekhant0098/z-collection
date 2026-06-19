@@ -2,7 +2,7 @@ import api from "../api/api";
 
  
 export const useBaseService = (type) => {
-  // A helper to handle all API calls consistently
+  
   const handleRequest = async (request, errorMsg) => {
     try {
       const res = await request;

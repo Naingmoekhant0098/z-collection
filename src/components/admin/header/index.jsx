@@ -21,13 +21,9 @@ export function Header() {
       : "Dashboard";
   if (lastSegment === "chats-list") return null;
   return (
-    <header className="fixed top-0 z-30 right-0 left-0 md:left-64 h-16 bg-pink-100 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800  transition-all flex items-center">
+    <header className="fixed top-0 z-30 right-0 left-0 md:left-64 h-16 bg-gray-100 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800  transition-all flex items-center">
       <div className="flex items-center justify-between w-full px-6">
-        <div className="flex-1 items-center">
-          <h1 className="text-lg md:text-xl ml-7 md:ml-0 text-center md:text-left pl-10 md:pl-0 font-semibold text-gray-900 dark:text-white capitalize">
-            {lastSegment.replace(/-/g, " ")}
-          </h1>
-        </div>
+        <div className="flex-1 items-center"></div>
 
         <div className="flex items-center gap-1 md:gap-3">
           <Button

@@ -54,13 +54,13 @@ export function AdminLogin() {
         if (response?.status && response?.statusCode == 200) {
           customToast.success("Congratulation", response.data.message);
           Cookies.set("token", response.data?.data?.token);
-          console.log(Cookies.get("token"));
+         
           setIsLoading(false);
           navigate("/");
         }
       } catch (error) {}
     } catch (error) {
-      console.error("Login failed", error);
+      
       customToast.error("Login Failed", "Something went wrong");
     } finally {
       setIsLoading(false);

@@ -1,7 +1,3 @@
-import { Card, CardContent } from "../../../../components/ui/card";
-import { Button } from "../../../../components/ui/button";
-import { Search, Plus } from "lucide-react";
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,8 +14,9 @@ import { UserService } from "../../../../services/UserService";
 import UserCardSkeleton from "../loading";
 import UserCard from "../card";
 import { UpdatePasswordDialog } from "../update_password";
+import customToast from "../../../../components/customToast";
 
-export function UserTable() {
+export function CustomerTable() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [users, setUsers] = useState(null);
@@ -41,15 +38,21 @@ export function UserTable() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await UserService().fetchAll({
-        // order,
+
+      const service = UserService();
+
+    
+      const response = await service.fetchAllCustomers({
         // search: searchText,
       });
-      if (response.data?.success) {
+      console.log(response);
+
+      if (response?.data?.success) {
         setUsers(response.data?.data || []);
       }
     } catch (error) {
-      customToast.error("Error Fetching Categories");
+      console.log(error)
+      customToast.error("Error Fetching Users");
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +83,7 @@ export function UserTable() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Users</BreadcrumbPage>
+            <BreadcrumbPage>Customers</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -94,18 +97,6 @@ export function UserTable() {
             placeholder="Search users..."
             className="pl-8 text-xs h-8"
           /> */}
-        </div>
-        <div>
-          <Button
-            onClick={() => {
-              setType("create");
-              // setSelectedCategory(null);
-              setIsOpen(true);
-            }}
-            className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Add User
-          </Button>
         </div>
       </div>
 

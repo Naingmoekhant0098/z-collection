@@ -20,15 +20,12 @@ import {
   Edit2,
 } from "lucide-react";
 import { ProductService } from "../../services/PostService";
-import { Button } from "../../components/ui/button";
-import { DeleteAccountConfirmation } from "../../components/admin/Dialogs/deleteAccount";
-import customToast from "../../components/customToast";
 
 function ProductDetail() {
   const { id } = useParams();
   const [product, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isDeleteShow,setIsDeleteShow] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,19 +47,6 @@ function ProductDetail() {
       setLoading(false);
     }
   };
-
-  const handleDelete = async () => {
-    try {
-      const res = await ProductService().deleteById(id);
-      if (res.data?.success) {
-        customToast.success("Product Deleted Successfully");
-        navigate("/admin/products");
-      }
-    } catch (error) {
-      console.error("Error deleting product:", error);
-    }
-  };
-
 
   if (loading) {
     return (
@@ -90,32 +74,21 @@ function ProductDetail() {
     (acc, v) => acc + (v.remaining_stock || 0),
     0
   );
- 
-  return (
-    <main className="flex-1 mt-10 md:mt-0 overflow-y-auto    min-h-screen">
-      <div className=" flex items-center justify-between mb-4 md:mb-0">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 pl-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back</span>
-        </button>
 
-        <div className=" flex items-center gap-2">
-          <DeleteAccountConfirmation isOpen={isDeleteShow}  data={product} handleClose={()=>setIsDeleteShow(false)} handleDelete={handleDelete}/>
-          <Button onClick={() => setIsDeleteShow(true)} variant="outline" className="text-red-600 hover:text-red-700">
-            <Trash2 />
-          </Button>
-          <Button variant="outline" onClick={()=> navigate(`/admin/products/edit/${id}`)} className="text-indigo-600 hover:text-indigo-700">
-            <Edit2 />
-          </Button>
+  return (
+    <main className="flex-1 mt-12 md:mt-0 overflow-y-auto    min-h-screen">
+      <div className=" flex items-center justify-between mb-4 md:mb-0">
+        <div
+          onClick={() => navigate(-1)}
+          className="p-2 bg-white rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0 mt-0.5 shadow-xs"
+        >
+          <ArrowLeft className="w-4 h-4" />
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto  lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-4 space-y-6 lg:sticky ">
-          <div className=" border border-slate-200/80 p-2 rounded-sm shadow-sm">
+      <div className="max-w-[1600px] mx-auto  lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
+        <div className="lg:col-span-4 space-y-3 lg:sticky ">
+          <div className=" border border-slate-200/80 p-2 rounded-3xl ">
             <div className="aspect-[4/2] w-full bg-slate-50 overflow-hidden">
               <img
                 src={
@@ -127,7 +100,7 @@ function ProductDetail() {
               />
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="">
             <div>
               <span className="text-[10px] font-bold tracking-widest text-indigo-600 uppercase">
                 Product Name
@@ -145,23 +118,26 @@ function ProductDetail() {
             </div>
           </div>
         </div>
-        <div className="lg:col-span-8 space-y-8">
-          <div className="grid grid-cols-2 md:grid-cols-4   divide-x divide-slate-200 bg-white py-4 shadow-xs">
+        <div className="lg:col-span-8 space-y-4 md:space-y-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-200 bg-white py-4 border border-slate-200 rounded-2xl overflow-hidden">
             <StatBlock
               icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}
               label="Category"
               value={product.category_id?.name || "Unassigned"}
             />
+
             <StatBlock
               icon={<DollarSign className="w-3.5 h-3.5 text-slate-400" />}
               label="Total Cost (အရင်း)"
               value={`${product.total_cost?.toLocaleString()} MMK`}
             />
+
             <StatBlock
               icon={<Package className="w-3.5 h-3.5 text-slate-400" />}
               label="Remaining Units"
               value={`${totalRemainingStock} / ${totalInitialStock} Pcs`}
             />
+
             <StatBlock
               icon={<PieChart className="w-3.5 h-3.5 text-slate-400" />}
               label="Operational Status"
@@ -178,7 +154,7 @@ function ProductDetail() {
               </h2>
             </div>
 
-            <div className=" overflow-hidden ">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left font-mono whitespace-nowrap">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium uppercase tracking-wider">
@@ -192,17 +168,19 @@ function ProductDetail() {
                       </th>
                     </tr>
                   </thead>
+
                   <tbody className="divide-y divide-slate-100">
                     {variants.map((variant) => {
                       const soldVariantQty =
                         (variant.initial_stock || 0) -
                         (variant.remaining_stock || 0);
+
                       const isLowStock = (variant.remaining_stock || 0) < 15;
 
                       return (
                         <tr
                           key={variant._id}
-                          className="hover:bg-slate-50/50 transition-colors"
+                          className="hover:bg-slate-50 transition-colors"
                         >
                           <td className="px-5 py-3.5">
                             <span className="font-bold text-slate-900">
@@ -213,23 +191,26 @@ function ProductDetail() {
                               {variant.color}
                             </span>
                           </td>
+
                           <td className="px-5 py-3.5 text-right text-slate-500">
                             {variant.initial_stock}
                           </td>
+
                           <td className="px-5 py-3.5 text-right">
                             <span
                               className={`font-semibold ${
-                                isLowStock
-                                  ? "text-amber-600 font-bold"
-                                  : "text-slate-900"
+                                isLowStock ? "text-amber-600" : "text-slate-900"
                               }`}
                             >
-                              {variant.remaining_stock} {isLowStock && "⚠️"}
+                              {variant.remaining_stock}
+                              {isLowStock && " ⚠️"}
                             </span>
                           </td>
+
                           <td className="px-5 py-3.5 text-right text-indigo-600 font-medium">
                             {soldVariantQty > 0 ? `+${soldVariantQty}` : "0"}
                           </td>
+
                           <td className="px-5 py-3.5 text-right font-bold text-slate-900">
                             {variant.price?.toLocaleString()} MMK
                           </td>
@@ -242,6 +223,7 @@ function ProductDetail() {
             </div>
           </div>
 
+          {/* Footer Info */}
           <div className="flex gap-6 justify-end text-[10px] font-mono text-slate-400 uppercase tracking-wider">
             <span>
               Doc_Created:{" "}
@@ -249,6 +231,7 @@ function ProductDetail() {
                 ? new Date(product.created_at).toLocaleDateString()
                 : "-"}
             </span>
+
             <span>
               Doc_Updated:{" "}
               {product.updated_at
@@ -262,16 +245,15 @@ function ProductDetail() {
   );
 }
 
-// Flat Stat Block Sub-component
 function StatBlock({ icon, label, value, isStatus, isActive }) {
   return (
-    <div className="px-6 py-2 flex flex-col gap-1">
-      <span className="text-[9px] font-bold uppercase text-slate-400 tracking-widest flex items-center gap-1.5">
+    <div className="px-6 py-2 flex flex-col gap-1  rounded-2xl">
+      <span className="text-[9px] font-bold uppercase text-slate-500 tracking-widest flex items-center gap-1.5">
         {icon} {label}
       </span>
       {isStatus ? (
         <span
-          className={`text-[10px] font-bold tracking-wider uppercase mt-0.5 ${
+          className={`text-[10px]  font-medium tracking-wider uppercase mt-0.5 ${
             isActive ? "text-emerald-600" : "text-slate-400"
           }`}
         >

@@ -21,10 +21,11 @@ import { LogoutConfirmation } from "../Dialogs/logout/index";
 import { Sheet, SheetContent, SheetTrigger } from "../../ui/sheet";
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: LayoutList, label: "Products", path: "/admin/products" },
-  { icon: LayoutList, label: "Categories", path: "/admin/categories" },
-  { icon: LayoutList, label: "Orders", path: "/admin/orders" },
-  { icon: Users, label: "Users", path: "/admin/users" },
+  { icon: LayoutList, label: "Products", path: "/products" },
+  { icon: LayoutList, label: "Categories", path: "/categories" },
+  { icon: LayoutList, label: "Orders", path: "/orders" },
+  { icon: Users, label: "Users", path: "/users" },
+  { icon: Users, label: "Customers", path: "/customers" },
 ];
 
 export function Sidebar() {

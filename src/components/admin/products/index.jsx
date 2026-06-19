@@ -73,21 +73,6 @@ export function ProductTable() {
     fetchProducts();
   }, [page, searchText, order, date]);
 
-  const handleDelete = async (id) => {
-    try {
-      const res = await ProductService().deleteById(id);
-
-      if (res?.success) {
-        fetchProducts();
-        customToast.success("Deleted Successfully");
-      } else {
-        customToast.error("Delete Failed");
-      }
-    } catch (err) {
-      customToast.error("Unexpected error");
-    }
-  };
-
   const generateExcel = async () => {
     try {
       setIsExporting(true);
@@ -161,7 +146,7 @@ export function ProductTable() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <Input
-            className="pl-10 text-sm"
+            className="pl-10 text-xs"
             placeholder="Search product..."
             value={searchText}
             onChange={(e) => {
@@ -182,12 +167,22 @@ export function ProductTable() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 w-full md:grid-cols-3 lg:grid-cols-3 gap-3 mb-4">
-        {isLoading
-          ? [...Array(10)].map((_, i) => <OrderCardSkeleton key={i} />)
-          : products.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
+      <div className="grid grid-cols-1 w-full md:grid-cols-3 lg:grid-cols-3 gap-2 mb-4">
+        {isLoading ? (
+          [...Array(10)].map((_, i) => <OrderCardSkeleton key={i} />)
+        ) : products?.length > 0 ? (
+          products.map((product) => (
+            <ProductCard
+              key={product._id}
+              product={product}
+              refresh={fetchProducts}
+            />
+          ))
+        ) : (
+          <div className="col-span-1 md:col-span-3 lg:col-span-3 py-20 text-center text-gray-400 text-sm bg-white border border-slate-100 rounded-xl">
+            No products found
+          </div>
+        )}
       </div>
 
       <CustomPagination

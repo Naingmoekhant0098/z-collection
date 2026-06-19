@@ -1,0 +1,93 @@
+import React, { useState } from "react";
+import { Badge } from "../../../components/ui/badge";
+import { Calendar, Edit2, Lock, LockKeyhole, Trash2 } from "lucide-react";
+import { Button } from "../../../components/ui/button";
+import { cn } from "@/lib/utils";
+function UserCard({ user, handleOpenEdit ,handleOpenPasswordUpdate }) {
+  //   const [isOpen, setIsOpen] = useState(false);
+
+  //   const handleCloseDialog = () => {
+  //     setIsOpen(false);
+  //   };
+
+  return (
+    <div
+        className="group bg-white p-5  rounded-3xl border border-slate-200 hover:border-slate-200 hover:shadow-sm transition-all duration-200 flex flex-col justify-between"
+    >
+      <div className="">
+        <div className="flex items-start gap-3">
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+              {user?.name?.charAt(0)}
+            </div>
+
+            <span
+              className={cn(
+                "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border border-white",
+                user?.status === "Active" ? "bg-green-500" : "bg-red-500"
+              )}
+            />
+          </div>
+
+          {/* User Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-medium text-sm truncate">{user?.name}</h3>
+
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                {user?.role}
+              </Badge>
+            </div>
+
+            <p className="text-[11px] text-zinc-500 truncate mt-1">
+              {user?.email}
+            </p>
+            <div className="flex items-center gap-1 text-[11px] text-zinc-400 mt-1">
+              <Calendar size={10} />
+              {user?.created_at}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-3 border-t pt-4 border-slate-100">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleOpenPasswordUpdate(user)}
+            className="flex-1 h-8 rounded-2xl text-xs"
+          >
+            <LockKeyhole size={12} />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleOpenEdit(user)}
+           className="flex-1 h-8 rounded-2xl text-xs"
+          >
+            <Edit2 size={12} />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+           className="flex-1 h-8 rounded-2xl text-xs"
+          >
+            <Trash2 size={12} />
+          </Button>
+        </div>
+      </div>
+
+      {/* <UserDialog
+        isOpen={isOpen}
+        handleClose={handleCloseDialog}
+        type="edit"
+        selectedCategory={user}
+        // onRefresh={fetchCategories}
+      /> */}
+    </div>
+  );
+}
+
+export default UserCard;

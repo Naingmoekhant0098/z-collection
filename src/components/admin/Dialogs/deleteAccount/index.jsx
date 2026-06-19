@@ -21,8 +21,8 @@ export function DeleteAccountConfirmation({
    
   const targetName = data?.name || data?.title || data?.royal_order_number || data?.platform || "";
 
-  const handleDeleteAccount = () => {
-    handleDelete(data?.id)
+  const handleDeleteAccount = (e) => {
+    handleDelete(e)
     handleClose()
   }
 
@@ -59,7 +59,7 @@ export function DeleteAccountConfirmation({
           
           <Button
             variant="destructive"
-            onClick={handleDeleteAccount}
+            onClick={(e)=>handleDeleteAccount(e)}
             disabled={isDeleteLoading}
             className="w-full sm:w-32 bg-red-600 hover:bg-red-700 text-white h-11 font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
           >

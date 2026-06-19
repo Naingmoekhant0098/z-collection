@@ -18,7 +18,10 @@ import {
   AlignLeft,
   Layers,
   Edit3,
-  Plus, // Import Plus icon
+  Plus,
+  Edit,
+  UserPlus,
+  TagIcon, // Import Plus icon
 } from "lucide-react";
 import customToast from "../../../components/customToast";
 import { CategoryService } from "../../../services/CategoryService";
@@ -97,22 +100,22 @@ export function CategoryDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[450px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
         <form onSubmit={handleSave}>
-          <DialogHeader className="bg-main p-6 py-3 text-white">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-black/10 rounded-full">
+        <DialogHeader className=" p-6 py-4 ">
+            <div className="flex items-center gap-3  border-b pb-3">
+              <div className="p-2 rounded-full bg-gray-200 ">
                 {type === "edit" ? (
-                  <Edit3 className="w-4 h-4" />
+                  <Edit className="w-4 h-4" />
                 ) : (
-                  <Layers className="w-4 h-4" />
+                  <TagIcon className="w-4 h-4" />
                 )}
               </div>
-              <DialogTitle className="text-lg font-medium">
-                {type === "edit" ? "Edit Category" : "New Category"}
+
+              <DialogTitle className="text-md font-medium">
+                {type === "edit" ? "Edit Category" : "Create Category"}
               </DialogTitle>
             </div>
           </DialogHeader>
-
-          <div className="p-6 space-y-6 bg-white">
+          <div className="p-6 pt-0 space-y-5 bg-white">
             <div className="space-y-2">
               <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
                 Name
@@ -144,22 +147,7 @@ export function CategoryDialog({
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between rounded-2xl   ">
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-slate-700">
-                  Active Status
-                </span>
-                <span className="text-[10px] text-slate-500">
-                  Visible to customers
-                </span>
-              </div>
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({ ...prev, is_active: checked }))
-                }
-              />
-            </div>
+            
           </div>
 
           <DialogFooter className="p-6 pt-2 bg-white">
@@ -167,7 +155,7 @@ export function CategoryDialog({
               type="button"
               variant="ghost"
               onClick={handleClose}
-              className="h-11 rounded-xl text-slate-500 font-medium px-6"
+              className="h-11 text-[13px] rounded-xl text-slate-500 font-medium px-6"
             >
               Cancel
             </Button>
@@ -176,7 +164,7 @@ export function CategoryDialog({
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-main hover:opacity-90 text-white h-11 px-8 font-semibold rounded-xl shadow-lg transition-all"
+              className="bg-main text-[13px] hover:opacity-90 text-white h-11 px-8  font-medium rounded-xl shadow-lg transition-all"
             >
               {isLoading ? (
                 <Loader2 className="animate-spin w-4 h-4" />
