@@ -142,7 +142,7 @@ export function ProductTable() {
           </Button>
           <Button
             onClick={() => {
-              navigate("/admin/products/create");
+              navigate("/products/create");
             }}
             className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
           >
