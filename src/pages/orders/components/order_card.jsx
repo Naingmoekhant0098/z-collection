@@ -5,7 +5,14 @@ import { format, isValid } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { DeleteAccountConfirmation } from "../../../components/admin/Dialogs/deleteAccount";
 import { OrderService } from "../../../services/OrderService";
-export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
+import customToast from "../../../components/customToast";
+export default function OrderCard({
+  order,
+  isLoading,
+  onEdit,
+  onDelete,
+  refresh,
+}) {
   const [isDeleteShow, setIsDeleteShow] = useState(false);
 
   const handleDelete = async () => {
@@ -13,7 +20,8 @@ export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
       const res = await OrderService().deleteById(order?._id);
       if (res.data?.success) {
         customToast.success("Order Deleted Successfully");
-        navigate("/orders");
+        refresh();
+        // navigate("/orders");
       }
     } catch (error) {
       console.error("Error deleting order:", error);
@@ -84,7 +92,7 @@ export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
 
             <div>
               <h4 className="font-bold tracking-wider text-xs text-slate-900 leading-tight">
-              {order?.royal_order_number || orderSlug}
+                {order?.royal_order_number || orderSlug}
               </h4>
               <p className="text-[11px] font-mono font-medium text-slate-400 mt-0.5 uppercase">
                 CREATED DATE {formattedDate}
@@ -108,24 +116,21 @@ export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
           </div>
           <div className="flex text-[11px]  items-center">
             <span className=" font-medium">No of dresses :</span>
-            <span className="text-slate-700 font-semibold">
-              {" "}
-              {totalItems} 
-            </span>
+            <span className="text-slate-700 font-semibold"> {totalItems}</span>
           </div>
         </div>
-        
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-50"
-          >
-            <span className="text-[10px]     uppercase tracking-wider">
-              Actions
-            </span>
 
-            <div className="flex items-center gap-1">
-              {/* View Details Button */}
-              {/* <button
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-50"
+        >
+          <span className="text-[10px]     uppercase tracking-wider">
+            Actions
+          </span>
+
+          <div className="flex items-center gap-1">
+            {/* View Details Button */}
+            {/* <button
               type="button"
               title="View Details"
               onClick={() => navigate(`/orders/${order._id}`)}
@@ -133,32 +138,31 @@ export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
             >
               <Eye className="w-3.5 h-3.5" />
             </button> */}
-              <button
-                type="button"
-                title="Edit Order"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onEdit) onEdit(order._id);
-                  else navigate(`/orders/edit/${order._id}`);
-                }}
-                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                title="Delete Order"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsDeleteShow(true);
-                }}
-                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              title="Edit Order"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onEdit) onEdit(order._id);
+                else navigate(`/orders/edit/${order._id}`);
+              }}
+              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Delete Order"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDeleteShow(true);
+              }}
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
-         
+        </div>
       </div>
     </div>
   );

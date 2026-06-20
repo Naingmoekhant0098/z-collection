@@ -295,6 +295,7 @@ export function OrderTable() {
               <OrderCard
                 key={order._id}
                 order={order}
+                refresh={fetchOrders}
                 // onDelete={(targetOrder) => handleYourDeleteModal(targetOrder)}
                 // onEdit={(orderId) => handleYourEditRedirect(orderId)}
               />
