@@ -1,7 +1,5 @@
-
-
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";  
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Trash2,
@@ -69,6 +67,7 @@ function CreateOrEditOrder() {
     items: [],
     payment_method: "cash",
     payment_status: "unpaid",
+    platform: "tiktok",
     royal_order_number: "",
     status: "pending",
   });
@@ -279,7 +278,7 @@ function CreateOrEditOrder() {
 
   return (
     <main className="flex-1 overflow-y-auto mt-14 md:mt-0 ">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-auto mx-auto space-y-6">
         <div className="flex flex-col gap-4">
           <Breadcrumb>
             <BreadcrumbList>
@@ -640,6 +639,39 @@ function CreateOrEditOrder() {
                     className="w-full p-2.5 text-xs border border-slate-200 bg-slate-50/50 rounded-lg focus:bg-white focus:ring-2 focus:ring-pink-100 outline-none transition-all"
                     placeholder="e.g. R0000000"
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] uppercase font-bold text-slate-600">
+                    Platform
+                  </label>
+                  <Select
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, platform: value })
+                    }
+                    value={formData.platform}
+                  >
+                    <SelectTrigger className="w-full h-10 text-xs border border-slate-200 rounded-lg bg-slate-50/50 focus:bg-white transition-all">
+                      <SelectValue placeholder="Select Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tiktok" className="text-xs">
+                        Tiktok
+                      </SelectItem>
+                      <SelectItem value="viber" className="text-xs">
+                        Viber
+                      </SelectItem>
+                      <SelectItem value="telegram" className="text-xs">
+                        Telegram
+                      </SelectItem>
+                      <SelectItem value="facebook" className="text-xs">
+                        Facebook
+                      </SelectItem>
+                      <SelectItem value="other" className="text-xs">
+                        Other
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1">

@@ -25,7 +25,7 @@ export function Sidebar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const userData = JSON.parse(sessionStorage.getItem("userData"));
+  const userData = JSON.parse(localStorage.getItem("userData"));
   const isPermission = userData?.role == "admin";
  
   const sidebarItems = [

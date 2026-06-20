@@ -122,6 +122,19 @@ export default function OrderCard({
 
         <div
           onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-between gap-1.5 py-1.5 border-t border-slate-50"
+        >
+          <span className="text-[10px]     uppercase tracking-wider">
+            Platform
+          </span>
+
+          <div className=" text-[10px]  bg-green-100 text-green-500 px-2 rounded-full">
+            {order?.platform ? order?.platform : "Unknow"}
+          </div>
+        </div>
+
+        <div
+          onClick={(e) => e.stopPropagation()}
           className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-50"
         >
           <span className="text-[10px]     uppercase tracking-wider">

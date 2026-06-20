@@ -37,6 +37,9 @@ export function ProductTable() {
   const [totalPage, setTotalPage] = useState(1);
   const [date, setDate] = useState(null);
 
+  const userData = JSON.parse(localStorage.getItem("userData"));
+  const isPermission = userData?.role == "admin";
+
   const [order, setOrder] = useState("desc");
 
   const fetchProducts = async () => {
@@ -140,15 +143,18 @@ export function ProductTable() {
             <File className="h-3 w-3" />
             Export
           </Button>
-          <Button
-            onClick={() => {
-              navigate("/products/create");
-            }}
-            className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
-          >
-            <Plus className="h-3 w-3" />
-            Add
-          </Button>
+
+          {isPermission && (
+            <Button
+              onClick={() => {
+                navigate("/products/create");
+              }}
+              className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
+            >
+              <Plus className="h-3 w-3" />
+              Add
+            </Button>
+          )}
         </div>
       </div>
       <div className="flex justify-between md:justify-start  mb-4 gap-3">

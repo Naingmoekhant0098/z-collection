@@ -38,6 +38,8 @@ export function OrderTable() {
   const [totalPage, setTotalPage] = useState(1);
   const [date, setDate] = useState(null);
   const navigate = useNavigate();
+  const userData = JSON.parse(localStorage.getItem("userData"));
+  const isPermission = userData?.role == "admin";
 
   const fetchOrders = async () => {
     try {
@@ -129,10 +131,7 @@ export function OrderTable() {
                 <SelectValue placeholder="Select Method" />
               </SelectTrigger>
               <SelectContent className="rounded-lg shadow-sm border-slate-100">
-                <SelectItem
-                  
-                  className="text-xs text-blue-700 cursor-pointer"
-                >
+                <SelectItem className="text-xs text-blue-700 cursor-pointer">
                   All
                 </SelectItem>
 
@@ -274,15 +273,17 @@ export function OrderTable() {
                 <File className="h-3 w-3" />
                 Export
               </Button>
-              <Button
-                onClick={() => {
-                  navigate("/orders/create");
-                }}
-                className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
-              >
-                <Plus className="h-3 w-3" />
-                Add
-              </Button>
+              {isPermission && (
+                <Button
+                  onClick={() => {
+                    navigate("/orders/create");
+                  }}
+                  className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add
+                </Button>
+              )}
             </div>
           </div>
         </div>
