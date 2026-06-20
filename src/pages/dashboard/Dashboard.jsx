@@ -6,7 +6,14 @@ import FilterBar from "./components/filterBar";
 import { RecentOrderTable } from "./components/order";
 import { useEffect, useState } from "react";
 import { DashboardService } from "../../services/DashboardService";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
 
+  BreadcrumbSeparator,
+} from "../../components/ui/breadcrumb";
 export default function Dashboard() {
   const [selectedFilter, setSelectedFilter] = useState("today");
   const [metricData, setMetricData] = useState({
@@ -47,15 +54,27 @@ export default function Dashboard() {
   }, [selectedFilter]);
 
   return (
-    <main className="flex-1  overflow-y-auto  mt-10">
+    <main className="flex-1 mt-14  md:mt-0 overflow-y-auto ">
+       <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          
+          
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div className=" space-y-3 md:space-y-6">
         <div>
           <FilterBar
             selectedFilter={selectedFilter}
             setSelectedFilter={setSelectedFilter}
           />
-          <RevenueChart yearCompareData={yearCompareData} />
-          <MetricCards metricData={metricData} />
+         <div  className=" flex flex-col md:flex-col-reverse gap-6 " >
+         <RevenueChart yearCompareData={yearCompareData} />
+         <MetricCards metricData={metricData} />
+         </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 mt-5 gap-3 md:gap-6">

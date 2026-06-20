@@ -27,7 +27,7 @@ function UserCard({ user, handleOpenEdit, handleOpenPasswordUpdate }) {
             />
           </div>
 
-          {/* User Info */}
+           
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-medium text-sm truncate">{user?.name}</h3>

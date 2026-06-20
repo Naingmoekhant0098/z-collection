@@ -54,13 +54,15 @@ export function AdminLogin() {
         if (response?.status && response?.statusCode == 200) {
           customToast.success("Congratulation", response.data.message);
           Cookies.set("token", response.data?.data?.token);
-         
+          sessionStorage.setItem(
+            "userData",
+            JSON.stringify(response?.data?.data?.student)
+          );
           setIsLoading(false);
           navigate("/");
         }
       } catch (error) {}
     } catch (error) {
-      
       customToast.error("Login Failed", "Something went wrong");
     } finally {
       setIsLoading(false);

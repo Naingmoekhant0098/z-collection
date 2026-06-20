@@ -63,7 +63,7 @@ export default function MinimalistOrderDetail() {
   const currentPaymentStatus = order?.status?.toLowerCase() || "pending";
 
   return (
-    <main className="flex-1 overflow-y-auto mt-12 md:mt-0   min-h-screen text-slate-800">
+    <main className="flex-1 overflow-y-auto mt-14 md:mt-0   min-h-screen text-slate-800">
       <div className="hidden">
         <div
           ref={voucherRef}

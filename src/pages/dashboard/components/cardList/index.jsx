@@ -44,7 +44,7 @@ export function MetricCards({ metricData }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 mt-5 md:mt-0 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6">
+    <div className="grid grid-cols-2    md:grid-cols-4 lg:grid-cols-4 gap-2 md:gap-6">
       {metricsConfig.map((metric) => (
         <div key={metric.key} className="shadow-none bg-white rounded-3xl border border-slate-200">
           <div className="p-5">

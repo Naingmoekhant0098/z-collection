@@ -29,9 +29,11 @@ import OrderCardSkeleton from "./order_loading";
 export function OrderTable() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("ongoing");
-  const [filter, setFilter] = useState("all");
+
   const [searchText, setSearchText] = useState("");
+  const [payment_method, setPaymentMethod] = useState();
+  const [status, setStatus] = useState();
+  const [paymentStatus, setPaymentStatus] = useState();
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
   const [date, setDate] = useState(null);
@@ -43,8 +45,9 @@ export function OrderTable() {
       const response = await OrderService().fetchAll({
         page,
         search: searchText,
-        status: filter !== "all" ? filter : undefined,
-        tab: activeTab,
+        paymentStatus,
+        paymentMethod: payment_method,
+        status,
         fromDate: date?.from ? format(date.from, "yyyy-MM-dd") : undefined,
         toDate: date?.to ? format(date.to, "yyyy-MM-dd") : undefined,
       });
@@ -68,7 +71,9 @@ export function OrderTable() {
         fromDate: fromStr,
         toDate: toStr,
         search: searchText,
-        status: filter !== "all" ? filter : undefined,
+        paymentStatus,
+        paymentMethod: payment_method,
+        status,
       });
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");
@@ -86,11 +91,11 @@ export function OrderTable() {
 
   useEffect(() => {
     fetchOrders();
-  }, [page, searchText, filter, activeTab, date]);
+  }, [page, searchText, date, paymentStatus, payment_method, status]);
 
   return (
-    <div className=" mt-10 md:mt-0">
-      <Breadcrumb className="mb-4">
+    <div className=" mt-11 md:mt-0">
+      <Breadcrumb className="mb-5">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
@@ -103,18 +108,34 @@ export function OrderTable() {
       </Breadcrumb>
 
       <div className="">
+        {/* <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search orders..."
+              className="pl-9 bg-gray-50 text-[14px] border-none rounded-xl"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div> */}
         <div className=" flex items-center  flex-wrap-reverse gap-3 justify-end md:justify-between ">
           <div className=" grid grid-cols-2 md:grid-cols-4 flex-wrap gap-2">
             <DatePickerWithRange date={date} setDate={setDate} />
 
             <Select
-            // value={formData.payment_method}
-            // onValueChange={(val) => setFormData({ ...formData, payment_method: val })}
+              value={payment_method}
+              onValueChange={(val) => setPaymentMethod(val)}
             >
               <SelectTrigger className="w-full h-10 text-xs text-slate-700 border-slate-200 rounded-lg bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all outline-none">
                 <SelectValue placeholder="Select Method" />
               </SelectTrigger>
               <SelectContent className="rounded-lg shadow-sm border-slate-100">
+                <SelectItem
+                  
+                  className="text-xs text-blue-700 cursor-pointer"
+                >
+                  All
+                </SelectItem>
+
                 <SelectItem
                   value="COD"
                   className="text-xs text-slate-700 cursor-pointer"
@@ -148,14 +169,18 @@ export function OrderTable() {
               </SelectContent>
             </Select>
 
-            <Select
-            // value={formData.status}
-            // onValueChange={(val) => setFormData({ ...formData, status: val })}
-            >
+            <Select value={status} onValueChange={(val) => setStatus(val)}>
               <SelectTrigger className="w-full h-10 text-xs text-slate-700 border-slate-200 rounded-lg bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all outline-none">
                 <SelectValue placeholder="Select Fulfillment Status" />
               </SelectTrigger>
               <SelectContent className="rounded-lg shadow-sm border-slate-100">
+                <SelectItem className="text-xs text-slate-700 cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />{" "}
+                    All
+                  </span>
+                </SelectItem>
+
                 <SelectItem
                   value="pending"
                   className="text-xs text-slate-700 cursor-pointer"
@@ -187,13 +212,20 @@ export function OrderTable() {
             </Select>
 
             <Select
-            // value={formData.payment_status}
-            // onValueChange={(val) => setFormData({ ...formData, payment_status: val })}
+              value={paymentStatus}
+              onValueChange={(val) => setPaymentStatus(val)}
             >
               <SelectTrigger className="w-full h-10 text-xs text-slate-700 border-slate-200 rounded-lg bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all outline-none">
                 <SelectValue placeholder="Select Financial Status" />
               </SelectTrigger>
               <SelectContent className="rounded-lg shadow-sm border-slate-100">
+                <SelectItem className="text-xs text-slate-700 cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />{" "}
+                    All
+                  </span>
+                </SelectItem>
+
                 <SelectItem
                   value="unpaid"
                   className="text-xs text-slate-700 cursor-pointer"
@@ -218,73 +250,44 @@ export function OrderTable() {
           {/* <DatePickerWithRange date={date} setDate={setDate} />
           <DatePickerWithRange date={date} setDate={setDate} /> */}
 
-          <div className=" flex gap-1">
-            <Button
-              onClick={() => {
-                generateExcel();
-              }}
-              className="bg-emerald-600 text-white font-normal rounded-4xl py-2! text-xs"
-            >
-              <File className="h-3 w-3" />
-              Export
-            </Button>
-            <Button
-              onClick={() => {
-                navigate("/orders/create");
-              }}
-              className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
-            >
-              <Plus className="h-3 w-3" />
-              Add New
-            </Button>
+          <div className=" flex justify-between gap-2 w-full">
+            <div className="relative   w-full md:w-auto">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                className="pl-10 text-xs"
+                placeholder="Search order..."
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+
+            <div className=" flex gap-1">
+              <Button
+                onClick={() => {
+                  generateExcel();
+                }}
+                className="bg-emerald-600 text-white font-normal rounded-4xl py-2! text-xs"
+              >
+                <File className="h-3 w-3" />
+                Export
+              </Button>
+              <Button
+                onClick={() => {
+                  navigate("/orders/create");
+                }}
+                className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
+              >
+                <Plus className="h-3 w-3" />
+                Add
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="pb-4 flex flex-col md:flex-row  mt-2 gap-1">
-          {/* <div className="flex gap-2 py-3 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium border ${
-                filter === "all"
-                  ? "bg-main text-white border-main"
-                  : "bg-white text-gray-500 border-gray-200"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter("paid")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium border flex gap-2 items-center ${
-                filter === "paid"
-                  ? "bg-main text-white border-main"
-                  : "bg-white text-gray-500 border-gray-200"
-              }`}
-            >
-              Paid
-            </button>
-            <button
-              onClick={() => setFilter("unpaid")}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium border flex gap-2 items-center ${
-                filter === "unpaid"
-                  ? "bg-main text-white border-main"
-                  : "bg-white text-gray-500 border-gray-200"
-              }`}
-            >
-              Unpaid
-            </button>
-          </div> */}
 
-          {/* <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search orders..."
-              className="pl-9 bg-gray-50 text-[14px] border-none rounded-xl"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </div> */}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 ">
+        <div className="grid grid-cols-1 mt-4 md:grid-cols-2 lg:grid-cols-3 gap-2  md:gap-3 ">
           {isLoading ? (
             [...Array(9)].map((_, i) => <OrderCardSkeleton key={i} />)
           ) : orders.length > 0 ? (

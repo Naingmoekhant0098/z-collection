@@ -72,7 +72,7 @@ export function UserTable() {
   };
 
   return (
-    <>
+    <div className=" mt-2 md:mt-0">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -143,6 +143,6 @@ export function UserTable() {
         selectedUser={selectedUser}
         onRefresh={fetchUsers}
       />
-    </>
+    </div>
   );
 }

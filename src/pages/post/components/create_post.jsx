@@ -59,7 +59,6 @@ function ProductForm() {
     }
   }, [formData.is_has_partner]);
 
-
   useEffect(() => {
     fetchAllCategories();
     fetchAllUsers();
@@ -215,7 +214,7 @@ function ProductForm() {
       data.append("total_cost", formData.total_cost);
       data.append("is_active", "true");
       data.append("variants", JSON.stringify(formData.variants));
-if (formData.is_has_partner && formData.partner_id) {
+      if (formData.is_has_partner && formData.partner_id) {
         data.append("is_has_partner", "true");
         data.append("partner_id", formData.partner_id);
       }
@@ -263,7 +262,7 @@ if (formData.is_has_partner && formData.partner_id) {
     setPreviewImage(null);
   };
   return (
-    <main className="flex-1 overflow-y-auto mt-10 md:mt-0 ">
+    <main className="flex-1 overflow-y-auto mt-14 md:mt-0 ">
       <div className="max-w-5xl mx-auto space-y-6">
         <ProductVariantDialog
           isOpen={isOpen}

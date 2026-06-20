@@ -8,13 +8,15 @@ import {
 } from "../../../../components/ui/breadcrumb";
 
 import { useEffect, useState } from "react";
-import { Input } from "../../../../components/ui/input";
+
 import { UserDialog } from "../form";
 import { UserService } from "../../../../services/UserService";
 import UserCardSkeleton from "../loading";
 import UserCard from "../card";
 import { UpdatePasswordDialog } from "../update_password";
 import customToast from "../../../../components/customToast";
+import { Search } from "lucide-react";
+import { Input } from "../../../../components/ui/input";
 
 export function CustomerTable() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,8 +25,6 @@ export function CustomerTable() {
   const [type, setType] = useState("create");
   const [searchText, setSearchText] = useState("");
   const [loading, setIsLoading] = useState(false);
-  // const [totalPage, setTotalPage] = useState(1);
-  // const [order, setOrder] = useState("desc");
 
   const [passwordOpen, setPasswordOpen] = useState(false);
 
@@ -41,9 +41,8 @@ export function CustomerTable() {
 
       const service = UserService();
 
-    
       const response = await service.fetchAllCustomers({
-        // search: searchText,
+        search: searchText,
       });
       console.log(response);
 
@@ -51,7 +50,7 @@ export function CustomerTable() {
         setUsers(response.data?.data || []);
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
       customToast.error("Error Fetching Users");
     } finally {
       setIsLoading(false);
@@ -60,7 +59,7 @@ export function CustomerTable() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [searchText]);
 
   const handleOpenEdit = (user) => {
     setIsOpen(true);
@@ -75,7 +74,7 @@ export function CustomerTable() {
   };
 
   return (
-    <>
+    <div className=" mt-2 md:mt-0">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -88,19 +87,19 @@ export function CustomerTable() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex flex-row justify-between gap-3 mb-4 mt-5">
-        <div className="relative max-w-xs flex-1">
-          {/* <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+      <div className="flex flex-row justify-between gap-3 mb-4 mt-4">
+        <div className="relative md:max-w-xs flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-gray-400" />
           <Input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search users..."
-            className="pl-8 text-xs h-8"
-          /> */}
+            className="pl-10 text-xs  rounded-2xl h-10"
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mt-4">
         {loading ? (
           [...Array(9)].map((_, i) => <UserCardSkeleton key={i} />)
         ) : users?.length > 0 ? (
@@ -134,6 +133,6 @@ export function CustomerTable() {
         selectedUser={selectedUser}
         onRefresh={fetchUsers}
       />
-    </>
+    </div>
   );
 }

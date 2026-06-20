@@ -10,7 +10,7 @@ function CategoryCard({ category, handleDelete,handleEdit }) {
     >
       <div>
         <div className="flex items-center justify-center mb-3">
-          <div className="p-2.5 bg-white   border-main rounded-xl group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors text-pink-400">
+          <div className="p-2.5    border-main rounded-full bg-main/10 group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors text-pink-400">
             <ShirtIcon className="w-5 h-5 text-pink-500 " />
           </div>
           {/* <div

@@ -126,7 +126,7 @@ function ProductCard({ product, refresh }) {
               </div>
             </div>
 
-            <div className="flex flex-col justify-center items-center gap-2 flex-shrink-0 ">
+            <div className="flex flex-col md:flex-row  justify-center items-center gap-2 flex-shrink-0 ">
               <Button
                 variant="outline"
                 size="icon"

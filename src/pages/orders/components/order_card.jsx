@@ -139,7 +139,7 @@ export default function OrderCard({ order, isLoading, onEdit, onDelete }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   if (onEdit) onEdit(order._id);
-                  else navigate(`/admin/orders/edit/${order._id}`);
+                  else navigate(`/orders/edit/${order._id}`);
                 }}
                 className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
               >

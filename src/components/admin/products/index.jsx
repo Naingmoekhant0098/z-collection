@@ -103,8 +103,8 @@ export function ProductTable() {
   };
 
   return (
-    <div className="">
-      <Breadcrumb>
+    <div className=" mt-11 md:mt-0">
+      <Breadcrumb className="mb-5">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
@@ -116,9 +116,18 @@ export function ProductTable() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex items-center justify-between mb-4 mt-3">
-        <div>
-          <DatePickerWithRange date={date} setDate={setDate} />
+      <div className="flex items-center gap-3 justify-between mb-4 ">
+        <div className="relative md:max-w-sm">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            className="pl-10 text-xs"
+            placeholder="Search product..."
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
 
         <div className=" flex gap-2">
@@ -138,36 +147,36 @@ export function ProductTable() {
             className="bg-main text-white font-normal rounded-4xl py-2! text-xs"
           >
             <Plus className="h-3 w-3" />
-            Add New
+            Add
           </Button>
         </div>
       </div>
-      <div className="flex justify-between mb-4 gap-3">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <Input
-            className="pl-10 text-xs"
-            placeholder="Search product..."
-            value={searchText}
-            onChange={(e) => {
-              setSearchText(e.target.value);
-              setPage(1);
-            }}
-          />
-        </div>
+      <div className="flex justify-between md:justify-start  mb-4 gap-3">
+        <DatePickerWithRange date={date} setDate={setDate} />
 
         <Select value={order} onValueChange={setOrder}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
+          <SelectTrigger className="w-full md:w-auto h-10 text-xs text-slate-700 border-slate-200 rounded-lg bg-slate-50/50 hover:bg-white focus:bg-white focus:ring-2 focus:ring-slate-100 transition-all outline-none">
+            <SelectValue placeholder="Select Method" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="desc">Newest</SelectItem>
-            <SelectItem value="asc">Oldest</SelectItem>
+
+          <SelectContent className="rounded-lg shadow-sm border-slate-100">
+            <SelectItem
+              value="desc"
+              className="text-xs text-blue-700 cursor-pointer"
+            >
+              Newest
+            </SelectItem>
+            <SelectItem
+              value="asc"
+              className="text-xs text-blue-700 cursor-pointer"
+            >
+              Oldest
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 w-full md:grid-cols-3 lg:grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-1 w-full md:grid-cols-4 lg:grid-cols-4 gap-2 mb-4">
         {isLoading ? (
           [...Array(10)].map((_, i) => <OrderCardSkeleton key={i} />)
         ) : products?.length > 0 ? (
