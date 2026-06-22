@@ -128,8 +128,27 @@ export default function OrderCard({
             Platform
           </span>
 
-          <div className=" text-[10px]  bg-green-100 text-green-500 px-2 rounded-full">
+          <div className=" text-[10px] capitalize  bg-green-100 text-green-500 px-2 rounded-full">
             {order?.platform ? order?.platform : "Unknow"}
+          </div>
+        </div>
+
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-between gap-1.5 py-1.5 border-t border-slate-50"
+        >
+          <span className="text-[10px]     uppercase tracking-wider">
+            Payment Status
+          </span>
+
+          <div
+            className={`text-[10px]  capitalize  ${
+              order?.payment_status == "unpaid"
+                ? "text-red-500 bg-red-100"
+                : "text-blue-500 bg-blue-100"
+            }  px-2 rounded-full`}
+          >
+            {order?.payment_status ? order?.payment_status : "Unknow"}
           </div>
         </div>
 
@@ -142,15 +161,6 @@ export default function OrderCard({
           </span>
 
           <div className="flex items-center gap-1">
-            {/* View Details Button */}
-            {/* <button
-              type="button"
-              title="View Details"
-              onClick={() => navigate(`/orders/${order._id}`)}
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors cursor-pointer"
-            >
-              <Eye className="w-3.5 h-3.5" />
-            </button> */}
             <button
               type="button"
               title="Edit Order"
