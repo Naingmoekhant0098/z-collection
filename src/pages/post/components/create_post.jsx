@@ -91,8 +91,6 @@ function ProductForm() {
       const res = await getById(id);
       if (res?.data?.success || res?.status) {
         const product = res.data.data;
-
-        // Ensure each incoming variant has clear remaining and initial stock parameters mapped
         const mappedVariants = (product.variants || []).map((variant) => {
           const currentStock =
             variant.remaining_stock ??
@@ -131,7 +129,7 @@ function ProductForm() {
     }
   };
 
-  // --- Variant Handlers ---
+   
   const addVariant = () => {
     setDialogMode("create");
     setEditingVariantIndex(null);
@@ -157,15 +155,13 @@ function ProductForm() {
       const updatedVariants = [...prev.variants];
 
       if (dialogMode === "edit" && editingVariantIndex !== null) {
-        // Keeping original initial_stock, but applying the newly updated remaining_stock
         updatedVariants[editingVariantIndex] = {
           ...updatedVariants[editingVariantIndex],
           ...variantData,
-          initial_stock: updatedVariants[editingVariantIndex].initial_stock, // Keep original
-          remaining_stock: variantData.remaining_stock, // Update to new value
+          initial_stock: updatedVariants[editingVariantIndex].initial_stock,  
+          remaining_stock: variantData.remaining_stock,  
         };
       } else {
-        // Clean additions balance both elements to match incoming values
         updatedVariants.push({
           ...variantData,
           initial_stock: variantData.remaining_stock,
