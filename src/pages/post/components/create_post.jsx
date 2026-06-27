@@ -129,7 +129,6 @@ function ProductForm() {
     }
   };
 
-   
   const addVariant = () => {
     setDialogMode("create");
     setEditingVariantIndex(null);
@@ -158,14 +157,16 @@ function ProductForm() {
         updatedVariants[editingVariantIndex] = {
           ...updatedVariants[editingVariantIndex],
           ...variantData,
-          initial_stock: updatedVariants[editingVariantIndex].initial_stock,  
-          remaining_stock: variantData.remaining_stock,  
+          initial_stock: updatedVariants[editingVariantIndex].initial_stock,
+          remaining_stock: variantData.remaining_stock,
+          initial_price: variantData.initial_price,
         };
       } else {
         updatedVariants.push({
           ...variantData,
           initial_stock: variantData.remaining_stock,
           remaining_stock: variantData.remaining_stock,
+          initial_price: variantData.initial_price,
         });
       }
 

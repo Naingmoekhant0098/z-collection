@@ -17,6 +17,7 @@ import { UpdatePasswordDialog } from "../update_password";
 import customToast from "../../../../components/customToast";
 import { Search } from "lucide-react";
 import { Input } from "../../../../components/ui/input";
+import CustomPagination from "../../../../components/pagination/pagination";
 
 export function CustomerTable() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +26,8 @@ export function CustomerTable() {
   const [type, setType] = useState("create");
   const [searchText, setSearchText] = useState("");
   const [loading, setIsLoading] = useState(false);
-
+  const [page, setPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(1);
   const [passwordOpen, setPasswordOpen] = useState(false);
 
   const handleCloseDialog = () => {
@@ -43,11 +45,13 @@ export function CustomerTable() {
 
       const response = await service.fetchAllCustomers({
         search: searchText,
+        page,
       });
-      console.log(response);
+      
 
       if (response?.data?.success) {
-        setUsers(response.data?.data || []);
+        setUsers(response.data?.data?.customers || []);
+        setTotalPage(response?.data?.data?.totalPages || 1);
       }
     } catch (error) {
       console.log(error);
@@ -59,7 +63,7 @@ export function CustomerTable() {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchText]);
+  }, [searchText,page]);
 
   const handleOpenEdit = (user) => {
     setIsOpen(true);
@@ -109,7 +113,7 @@ export function CustomerTable() {
               user={user}
               handleOpenEdit={handleOpenEdit}
               handleOpenPasswordUpdate={handleOpenPasswordUpdate}
-
+              refresh ={fetchUsers}
               // onDelete={(targetOrder) => handleYourDeleteModal(targetOrder)}
               // onEdit={(orderId) => handleYourEditRedirect(orderId)}
             />
@@ -120,6 +124,13 @@ export function CustomerTable() {
           </div>
         )}
       </div>
+       <div className="mt-6">
+              <CustomPagination
+                currentPage={page}
+                totalPages={totalPage}
+                onPageChange={setPage}
+              />
+            </div>
       <UserDialog
         isOpen={isOpen}
         handleClose={handleCloseDialog}

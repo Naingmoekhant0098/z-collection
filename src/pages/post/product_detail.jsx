@@ -66,9 +66,6 @@ function ProductDetail() {
 
   const variants = product.variants || [];
 
-  // =========================
-  // STOCK CALCULATION
-  // =========================
   const totalInitialStock = variants.reduce(
     (acc, v) => acc + (v.initial_stock || 0),
     0
@@ -79,36 +76,26 @@ function ProductDetail() {
     0
   );
 
-  // =========================
-  // SOLD UNITS
-  // =========================
   const totalSoldUnits = variants.reduce((acc, v) => {
     return acc + ((v.initial_stock || 0) - (v.remaining_stock || 0));
   }, 0);
 
-  // =========================
-  // REVENUE
-  // =========================
   const totalRevenue = variants.reduce((acc, v) => {
-    const sold =
-      (v.initial_stock || 0) - (v.remaining_stock || 0);
+    const sold = (v.initial_stock || 0) - (v.remaining_stock || 0);
     return acc + sold * (v.price || 0);
   }, 0);
 
-  // =========================
-  // COST
-  // =========================
+  const totalSellingRevenueByProductCount = variants.reduce((acc, v) => {
+    const sold = (v.initial_stock || 0) - (v.remaining_stock || 0);
+    return acc + sold * (v.initial_price || 0);
+  }, 0);
+
   const totalCost = product.total_cost || 0;
 
-  // =========================
-  // PROFIT
-  // =========================
   const profit = totalRevenue - totalCost;
 
   return (
-    <main className="flex-1 mt-12 md:mt-0 overflow-y-auto min-h-screen">
-
-      {/* BACK BUTTON */}
+    <main className="flex-1 mt-14 md:mt-0 overflow-y-auto min-h-screen">
       <div className="flex items-center justify-between mb-4 md:mb-0">
         <div
           onClick={() => navigate(-1)}
@@ -119,7 +106,6 @@ function ProductDetail() {
       </div>
 
       <div className="max-w-[1600px] mx-auto lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 items-start">
-
         <div className="lg:col-span-4 space-y-3 lg:sticky">
           <div className="border border-slate-200/80  overflow-hidden rounded-xl">
             <div className="aspect-[4/2] w-full bg-slate-50 overflow-hidden">
@@ -150,9 +136,7 @@ function ProductDetail() {
         </div>
 
         <div className="lg:col-span-8 space-y-4 md:space-y-8">
-
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-200 bg-white py-4 border border-slate-200 rounded-2xl overflow-hidden">
-
             <StatBlock
               icon={<Layers className="w-3.5 h-3.5 text-slate-400" />}
               label="Category"
@@ -188,65 +172,90 @@ function ProductDetail() {
 
             <StatBlock
               icon={<PieChart className="w-3.5 h-3.5 text-slate-400" />}
-              label="Profit"
+              label="Net Profit"
               value={`${profit.toLocaleString()} MMK`}
+              isStatus
+              isActive={profit >= 0}
+            />
+
+            <StatBlock
+              icon={<PieChart className="w-3.5 h-3.5 text-slate-400" />}
+              label="Profit By Specific Product"
+              value={`${totalSellingRevenueByProductCount.toLocaleString()} MMK`}
+              isStatus
+              isActive={profit >= 0}
+            />
+
+            <StatBlock
+              icon={<PieChart className="w-3.5 h-3.5 text-slate-400" />}
+              label="My Profit"
+              value={`${(
+                totalSellingRevenueByProductCount / 2
+              ).toLocaleString()} MMK`}
               isStatus
               isActive={profit >= 0}
             />
           </div>
 
-          <div className="space-y-3">
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left font-mono whitespace-nowrap">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase">
-                    <tr>
-                      <th className="px-5 py-3">Variant Specification</th>
-                      <th className="px-5 py-3 text-right">Initial Stock</th>
-                      <th className="px-5 py-3 text-right">Remaining Stock</th>
-                      <th className="px-5 py-3 text-right">Sold Units</th>
-                      <th className="px-5 py-3 text-right">Unit Price</th>
-                    </tr>
-                  </thead>
+          <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
+            {variants.map((variant) => {
+              const initial = variant.initial_stock || 0;
+              const remaining = variant.remaining_stock || 0;
+              const sold = Math.max(initial - remaining, 0);
 
-                  <tbody className="divide-y divide-slate-100">
-                    {variants.map((variant) => {
-                      const soldVariantQty =
-                        (variant.initial_stock || 0) -
-                        (variant.remaining_stock || 0);
+              const price = variant.price || 0;
+              const costPrice = variant.initial_price || 0;
+              const cost = initial * costPrice;
+              const profit = initial * price - initial * initial;
+              return (
+                <div
+                  key={variant._id}
+                  className="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 transition"
+                >
+                  {/* LEFT */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-semibold text-xs">
+                      {variant.size}
+                    </div>
 
-                      return (
-                        <tr key={variant._id} className="hover:bg-slate-50">
-                          <td className="px-5 py-3.5">
-                            <span className="font-bold">{variant.size}</span>
-                            <span className="mx-2 text-slate-400">/</span>
-                            <span>{variant.color}</span>
-                          </td>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {variant.size} · {variant.color}
+                      </p>
 
-                          <td className="px-5 py-3.5 text-right">
-                            {variant.initial_stock}
-                          </td>
+                      <div className="flex gap-3 mt-0.5 text-[11px] text-slate-500">
+                        <span className="">
+                          Stock : <span className=" text-green-400">{initial} </span>
+                        </span>
+                        <span>
+                          Remainig : <span className=" text-orange-400">{remaining} </span>
+                        </span>
+                        <span>Sold : <span className=" text-blue-400">{sold} </span></span>
+                      </div>
+                    </div>
+                  </div>
 
-                          <td className="px-5 py-3.5 text-right">
-                            {variant.remaining_stock}
-                          </td>
+                  <div className="text-right shrink-0 leading-tight">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {variant.price.toLocaleString()}MMK
+                    </p>
 
-                          <td className="px-5 py-3.5 text-right text-indigo-600 font-medium">
-                            {soldVariantQty}
-                          </td>
+                    <p className="text-[11px] text-slate-400">
+                      Initial Price  {costPrice.toLocaleString()}MMK
+                    </p>
 
-                          <td className="px-5 py-3.5 text-right font-bold">
-                            {variant.price?.toLocaleString()} MMK
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                    {/* <p
+                      className={`text-[11px] font-medium ${
+                        profit >= 0 ? "text-green-600" : "text-red-500"
+                      }`}
+                    >
+                      Profit {profit.toLocaleString()}
+                    </p> */}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
           <div className="flex gap-6 justify-end text-[10px] font-mono text-slate-400 uppercase">
             <span>
               Doc_Created:{" "}
@@ -268,7 +277,6 @@ function ProductDetail() {
   );
 }
 
- 
 function StatBlock({ icon, label, value, isStatus, isActive }) {
   return (
     <div className="px-6 py-2 flex flex-col gap-1 rounded-2xl">
@@ -285,9 +293,7 @@ function StatBlock({ icon, label, value, isStatus, isActive }) {
           ● {value}
         </span>
       ) : (
-        <span className="text-sm font-semibold text-slate-800">
-          {value}
-        </span>
+        <span className="text-sm font-semibold text-slate-800">{value}</span>
       )}
     </div>
   );

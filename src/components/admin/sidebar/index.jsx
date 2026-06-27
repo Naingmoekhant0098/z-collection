@@ -27,7 +27,7 @@ export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const userData = JSON.parse(localStorage.getItem("userData"));
   const isPermission = userData?.role == "admin";
- 
+
   const sidebarItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/", isShow: true },
     { icon: LayoutList, label: "Products", path: "/products", isShow: true },
@@ -51,7 +51,7 @@ export function Sidebar() {
       isShow: isPermission,
     },
   ];
-  console.log(sidebarItems)
+
   const visibleSidebarItems = sidebarItems.filter((item) => item.isShow);
   const handleClose = () => setIsOpen(false);
   const handleCloseMobile = () => setIsMobileOpen(false);
@@ -104,7 +104,7 @@ export function Sidebar() {
   );
 
   return (
-    <>
+    <div>
       <div className="lg:hidden fixed top-3 left-4 z-40">
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
           <SheetTrigger asChild>
@@ -129,6 +129,6 @@ export function Sidebar() {
       {isOpen && (
         <LogoutConfirmation isOpen={isOpen} handleColse={handleClose} />
       )}
-    </>
+    </div>
   );
 }

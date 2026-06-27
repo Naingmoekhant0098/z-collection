@@ -145,7 +145,9 @@ function CreateOrEditOrder() {
           variant_id: variant._id,
           size: variant.size,
           color: variant.color,
+          initial_price : variant.initial_price,
           price: variant.price,
+          wholesale_price: variant.wholesale_price,
           quantity: 1,
           max_stock: maxStock,
         },
@@ -154,25 +156,50 @@ function CreateOrEditOrder() {
     customToast.success("Added to list");
   };
 
+  // const updateQty = (index, delta) => {
+  //   const newItems = [...formData.items];
+  //   const targetItem = newItems[index];
+  //   const newQty = targetItem.quantity + delta;
+
+  //   if (delta > 0 && newQty > targetItem.max_stock) {
+  //     customToast.error(
+  //       "Stock Limit Reached",
+  //       `Only ${targetItem.max_stock} units available.`
+  //     );
+  //     return;
+  //   }
+
+  //   if (newQty > 0) {
+  //     newItems[index].quantity = newQty;
+  //     setFormData({ ...formData, items: newItems });
+  //   }
+  // };
   const updateQty = (index, delta) => {
     const newItems = [...formData.items];
-    const targetItem = newItems[index];
-    const newQty = targetItem.quantity + delta;
-
-    if (delta > 0 && newQty > targetItem.max_stock) {
+    const item = newItems[index];
+  
+    const newQty = item.quantity + delta;
+  
+    if (newQty <= 0) return;
+  
+    if (newQty > item.max_stock) {
       customToast.error(
-        "Stock Limit Reached",
-        `Only ${targetItem.max_stock} units available.`
+        "Stock Limit",
+        `Only ${item.max_stock} available`
       );
       return;
     }
+    item.quantity = newQty;
+    item.price =
+      newQty >= 3
+        ? item.wholesale_price
+        : item.price;
 
-    if (newQty > 0) {
-      newItems[index].quantity = newQty;
-      setFormData({ ...formData, items: newItems });
-    }
+    setFormData({
+      ...formData,
+      items: newItems,
+    });
   };
-
   const totalAmount = formData.items.reduce(
     (sum, i) => sum + i.price * i.quantity,
     0

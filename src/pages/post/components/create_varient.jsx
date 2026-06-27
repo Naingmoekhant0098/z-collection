@@ -10,12 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Loader2,
   Ruler,
@@ -40,6 +40,8 @@ export function ProductVariantDialog({
     initial_stock: "",
     remaining_stock: "",
     price: "",
+    initial_price: "",
+    wholesale_price: "",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,13 +50,19 @@ export function ProductVariantDialog({
     if (isOpen) {
       if (type === "edit" && variantData) {
         // Safe mapping with cross-compatibility fallbacks (stock vs remaining_stock)
-        const currentStock = variantData.remaining_stock ?? variantData.initial_stock ?? variantData.stock ?? "";
+        const currentStock =
+          variantData.remaining_stock ??
+          variantData.initial_stock ??
+          variantData.stock ??
+          "";
         setFormData({
           size: variantData.size || "",
           color: variantData.color || "",
           price: variantData.price || "",
           initial_stock: variantData.initial_stock ?? currentStock,
           remaining_stock: currentStock,
+          initial_price: variantData.initial_price,
+          wholesale_price: variantData.wholesale_price,
         });
       } else {
         // Reset state clearly on dynamic clean creations
@@ -64,6 +72,9 @@ export function ProductVariantDialog({
           initial_stock: "",
           remaining_stock: "",
           price: "",
+          initial_price: "",
+
+          wholesale_price: "",
         });
       }
     }
@@ -71,10 +82,10 @@ export function ProductVariantDialog({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev) => {
       const updatedData = { ...prev, [name]: value };
-      
+
       // Mirror values to initial_stock ONLY during new entries setup
       if (type === "create" && name === "remaining_stock") {
         updatedData.initial_stock = value;
@@ -91,7 +102,9 @@ export function ProductVariantDialog({
       !formData.size ||
       !formData.color ||
       formData.price === "" ||
-      formData.remaining_stock === ""
+      formData.remaining_stock === "" ||
+      formData.initial_price == "" ||
+      formData.wholesale_price == ""
     ) {
       customToast.error("Missing Info", "Please fill in all variant details.");
       setIsLoading(false);
@@ -103,6 +116,8 @@ export function ProductVariantDialog({
       price: Number(formData.price),
       initial_stock: Number(formData.initial_stock || formData.remaining_stock),
       remaining_stock: Number(formData.remaining_stock),
+      initial_price: Number(formData.initial_price),
+      wholesale_price: Number(formData.wholesale_price),
     };
 
     submitVariant(payload);
@@ -192,10 +207,29 @@ export function ProductVariantDialog({
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
+                Initial Price (MMK)
+              </Label>
+              <div className="relative">
+                <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <Input
+                  name="initial_price"
+                  type="number"
+                  placeholder="e.g. 45"
+                  value={formData.initial_price}
+                  onChange={handleInputChange}
+                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                  .000 Ks
+                </span>
+              </div>
+            </div>
 
             <div className="space-y-2">
               <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
-                Price (MMK)
+                Sell Price (MMK)
               </Label>
               <div className="relative">
                 <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
@@ -212,6 +246,30 @@ export function ProductVariantDialog({
                 </span>
               </div>
             </div>
+
+            
+
+            <div className="space-y-2">
+              <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
+                Wholesale Price (MMK)
+              </Label>
+              <div className="relative">
+                <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <Input
+                  name="wholesale_price"
+                  type="number"
+                  placeholder="e.g. 45"
+                  value={formData.wholesale_price}
+                  onChange={handleInputChange}
+                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                  .000 Ks
+                </span>
+              </div>
+            </div>
+
+          
           </div>
 
           <DialogFooter className="p-6 pt-2 bg-white">

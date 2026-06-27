@@ -7,8 +7,13 @@ export const UserService = () => {
     return await api.get(`/customer`, { params });
   };
 
+  const deleteCustomer = async (id) => {
+    return await api.delete(`/customer/${id}`);
+  };
+
   return {
     fetchAllCustomers,
+    deleteCustomer,
     ...base,
   };
 };

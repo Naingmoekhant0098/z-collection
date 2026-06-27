@@ -21,7 +21,7 @@ export function Header() {
       : "Dashboard";
   if (lastSegment === "chats-list") return null;
   return (
-    <header className="fixed top-0 z-30 right-0 left-0 md:left-64 h-16 bg-gray-100 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800  transition-all flex items-center">
+    <div className="fixed top-0 z-30 right-0 left-0 md:left-60 h-16 bg-gray-100 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800  transition-all flex items-center">
       <div className="flex items-center justify-between w-full px-6">
         <div className="flex-1 items-center"></div>
 
@@ -69,6 +69,6 @@ export function Header() {
           </div>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

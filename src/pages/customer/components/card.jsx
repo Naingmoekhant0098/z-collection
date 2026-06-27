@@ -3,12 +3,39 @@ import { Badge } from "../../../components/ui/badge";
 import { Calendar, Edit2, Lock, LockKeyhole, Trash2 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { cn } from "@/lib/utils";
-function UserCard({ user, handleOpenEdit, handleOpenPasswordUpdate }) {
-  //   const [isOpen, setIsOpen] = useState(false);
-
+import { DeleteAccountConfirmation } from "../../../components/admin/Dialogs/deleteAccount";
+import { UserService } from "../../../services/UserService";
+import customToast from "../../../components/customToast";
+function UserCard({ user, handleOpenEdit, handleOpenPasswordUpdate, refresh }) {
+  const [isDeleteShow, setIsDeleteShow] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   //   const handleCloseDialog = () => {
   //     setIsOpen(false);
   //   };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    setIsDeleteShow(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      const res = await UserService().deleteCustomer(user._id);
+      if (res?.data?.success) {
+        customToast.success("Customer Deleted Successfully");
+        setIsDeleteShow(false);
+        refresh?.();
+      } else {
+        customToast.error("Failed to delete customer");
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      customToast.error("Failed to delete product");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="group bg-white p-5  rounded-3xl border border-slate-200 hover:border-slate-200 hover:shadow-sm transition-all duration-200 flex flex-col justify-between">
@@ -27,7 +54,6 @@ function UserCard({ user, handleOpenEdit, handleOpenPasswordUpdate }) {
             />
           </div>
 
-           
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-medium text-sm truncate">{user?.name}</h3>
@@ -47,9 +73,20 @@ function UserCard({ user, handleOpenEdit, handleOpenPasswordUpdate }) {
             <p className="text-[11px] text-zinc-500 truncate mt-1">
               {user?.phone}
             </p>
-            <div className="flex items-center gap-1 text-[11px] text-zinc-400 mt-1">
-              <Calendar size={10} />
-              {user?.created_at}
+            <div className=" flex   justify-between">
+              <div className="flex items-center gap-1 text-[11px] text-zinc-400 mt-1">
+                <Calendar size={10} />
+                {new Date(user?.created_at).toLocaleDateString("en-GB")}
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className=" p-0 border-red-400 text-red-400 "
+                onClick={handleDeleteClick}
+              >
+                <Trash2 size={10} className="" />
+              </Button>
             </div>
           </div>
         </div>
@@ -82,6 +119,14 @@ function UserCard({ user, handleOpenEdit, handleOpenPasswordUpdate }) {
           </Button>
         </div> */}
       </div>
+
+      <DeleteAccountConfirmation
+        isOpen={isDeleteShow}
+        data={user}
+        loading={isDeleting}
+        handleClose={() => setIsDeleteShow(false)}
+        handleDelete={handleDelete}
+      />
 
       {/* <UserDialog
         isOpen={isOpen}
