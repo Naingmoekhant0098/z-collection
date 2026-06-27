@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "../../components/ui/breadcrumb";
+ 
 import {
   ArrowLeft,
   Package,
@@ -25,6 +18,7 @@ function ProductDetail() {
   const { id } = useParams();
   const [product, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [totalRevenue , setTotalRevenue] = useState(0);
 
   const navigate = useNavigate();
 
@@ -40,6 +34,7 @@ function ProductDetail() {
       const res = await ProductService().getById(id);
       if (res.data?.success) {
         setData(res.data?.data);
+        setTotalRevenue(res.data?.data?.salesStats?.totalRevenue)
       }
     } catch (error) {
       console.error("Error fetching product:", error);
@@ -80,19 +75,18 @@ function ProductDetail() {
     return acc + ((v.initial_stock || 0) - (v.remaining_stock || 0));
   }, 0);
 
-  const totalRevenue = variants.reduce((acc, v) => {
-    const sold = (v.initial_stock || 0) - (v.remaining_stock || 0);
-    return acc + sold * (v.price || 0);
-  }, 0);
+ 
 
   const totalSellingRevenueByProductCount = variants.reduce((acc, v) => {
-    const sold = (v.initial_stock || 0) - (v.remaining_stock || 0);
-    return acc + sold * (v.initial_price || 0);
+    const sold = (v.initial_stock || 0) - (v.remaining_stock || 0)
+    const variantRevenue = sold * (v.initial_price || 0);
+    return acc + variantRevenue;
   }, 0);
 
   const totalCost = product.total_cost || 0;
 
   const profit = totalRevenue - totalCost;
+  const ProfitByProduct =totalRevenue -totalSellingRevenueByProductCount ;
 
   return (
     <main className="flex-1 mt-14 md:mt-0 overflow-y-auto min-h-screen">
@@ -162,8 +156,6 @@ function ProductDetail() {
               isStatus
               isActive={product.is_active}
             />
-
-            {/* ➕ NEW: REVENUE */}
             <StatBlock
               icon={<DollarSign className="w-3.5 h-3.5 text-slate-400" />}
               label="Revenue"
@@ -180,21 +172,13 @@ function ProductDetail() {
 
             <StatBlock
               icon={<PieChart className="w-3.5 h-3.5 text-slate-400" />}
-              label="Profit By Specific Product"
-              value={`${totalSellingRevenueByProductCount.toLocaleString()} MMK`}
+              label="Profit By Selling Product"
+              value={`${ProfitByProduct.toLocaleString()} MMK`}
               isStatus
               isActive={profit >= 0}
             />
 
-            <StatBlock
-              icon={<PieChart className="w-3.5 h-3.5 text-slate-400" />}
-              label="My Profit"
-              value={`${(
-                totalSellingRevenueByProductCount / 2
-              ).toLocaleString()} MMK`}
-              isStatus
-              isActive={profit >= 0}
-            />
+            
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">

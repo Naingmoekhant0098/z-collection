@@ -36,7 +36,6 @@ export function ProductTable() {
   const [current, setCurrent] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
   const [date, setDate] = useState(null);
-
   const userData = JSON.parse(localStorage.getItem("userData"));
   const isPermission = userData?.role == "admin";
 
@@ -55,7 +54,7 @@ export function ProductTable() {
 
       if (response.data?.success) {
         setProducts(response.data?.data?.products || []);
-
+       
         setCurrent(response.data?.data?.page || 1);
         setTotalPage(
           Math.ceil(
