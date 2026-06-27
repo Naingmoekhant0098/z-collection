@@ -24,6 +24,8 @@ import {
   Banknote,
   Edit3,
   Shirt,
+  Trash,
+  Plus,
 } from "lucide-react";
 import customToast from "../../../components/customToast/index";
 
@@ -31,7 +33,7 @@ export function ProductVariantDialog({
   isOpen,
   handleClose,
   type = "create",
-  variantData, // Unified naming with the parent component
+  variantData,
   submitVariant,
 }) {
   const [formData, setFormData] = useState({
@@ -41,31 +43,26 @@ export function ProductVariantDialog({
     remaining_stock: "",
     price: "",
     initial_price: "",
-    wholesale_price: "",
+    wholesale_prices: [],
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [tier, setTier] = useState({ min_qty: "", price: "" });
 
-  // Sync modal internal fields when open, changing modes, or loading an existing variant
   useEffect(() => {
     if (isOpen) {
       if (type === "edit" && variantData) {
-        // Safe mapping with cross-compatibility fallbacks (stock vs remaining_stock)
         const currentStock =
-          variantData.remaining_stock ??
-          variantData.initial_stock ??
-          variantData.stock ??
-          "";
+          variantData.remaining_stock ?? variantData.initial_stock ?? "";
         setFormData({
           size: variantData.size || "",
           color: variantData.color || "",
           price: variantData.price || "",
           initial_stock: variantData.initial_stock ?? currentStock,
           remaining_stock: currentStock,
-          initial_price: variantData.initial_price,
-          wholesale_price: variantData.wholesale_price,
+          initial_price: variantData.initial_price || "",
+          wholesale_prices: variantData.wholesale_prices || [],
         });
       } else {
-        // Reset state clearly on dynamic clean creations
         setFormData({
           size: "",
           color: "",
@@ -73,8 +70,7 @@ export function ProductVariantDialog({
           remaining_stock: "",
           price: "",
           initial_price: "",
-
-          wholesale_price: "",
+          wholesale_prices: [],
         });
       }
     }
@@ -82,16 +78,35 @@ export function ProductVariantDialog({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => {
       const updatedData = { ...prev, [name]: value };
-
-      // Mirror values to initial_stock ONLY during new entries setup
       if (type === "create" && name === "remaining_stock") {
         updatedData.initial_stock = value;
       }
       return updatedData;
     });
+  };
+
+  const addTier = () => {
+    if (!tier.min_qty || !tier.price) {
+      customToast.error("Fill tier info");
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      wholesale_prices: [
+        ...prev.wholesale_prices,
+        { min_qty: Number(tier.min_qty), price: Number(tier.price) },
+      ],
+    }));
+    setTier({ min_qty: "", price: "" });
+  };
+
+  const removeTier = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      wholesale_prices: prev.wholesale_prices.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSave = (e) => {
@@ -103,10 +118,13 @@ export function ProductVariantDialog({
       !formData.color ||
       formData.price === "" ||
       formData.remaining_stock === "" ||
-      formData.initial_price == "" ||
-      formData.wholesale_price == ""
+      formData.initial_price === "" ||
+      formData.wholesale_prices.length === 0
     ) {
-      customToast.error("Missing Info", "Please fill in all variant details.");
+      customToast.error(
+        "Missing Info",
+        "Please fill in all details and add at least one wholesale tier."
+      );
       setIsLoading(false);
       return;
     }
@@ -114,10 +132,10 @@ export function ProductVariantDialog({
     const payload = {
       ...formData,
       price: Number(formData.price),
-      initial_stock: Number(formData.initial_stock || formData.remaining_stock),
+      initial_stock: Number(formData.initial_stock),
       remaining_stock: Number(formData.remaining_stock),
       initial_price: Number(formData.initial_price),
-      wholesale_price: Number(formData.wholesale_price),
+      wholesale_prices: formData.wholesale_prices,
     };
 
     submitVariant(payload);
@@ -129,22 +147,23 @@ export function ProductVariantDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
         <form onSubmit={handleSave}>
-          <DialogHeader className="bg-main p-6 py-3 text-white">
+          <DialogHeader className=" p-6 py-3 text-white">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-black/10 rounded-full">
                 {type === "edit" ? (
-                  <Edit3 className="w-4 h-4 text-pink-400" />
+                  <Edit3 className="w-4 h-4 text-black" />
                 ) : (
-                  <Shirt className="w-4 h-4 " />
+                  <Shirt className="w-4 h-4" />
                 )}
               </div>
-              <DialogTitle className="text-md font-medium">
+              <DialogTitle className="text-md font-medium text-black">
                 {type === "edit" ? "Update Variant" : "New Variant"}
               </DialogTitle>
             </div>
           </DialogHeader>
 
           <div className="p-4 space-y-5 bg-white">
+            {/* Size & Color Grid */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
@@ -158,22 +177,19 @@ export function ProductVariantDialog({
                       setFormData((prev) => ({ ...prev, size: value }))
                     }
                   >
-                    <SelectTrigger className="pl-10 h-11 border-slate-200 rounded-xl text-sm focus:ring-pink-200">
-                      <SelectValue placeholder="Select Size" />
+                    <SelectTrigger className="pl-10 w-48 h-11 border-slate-200 rounded-xl text-sm">
+                      <SelectValue placeholder="Select" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-200">
-                      <SelectItem value="XS">Extra S(XS)</SelectItem>
-                      <SelectItem value="S">Small (S)</SelectItem>
-                      <SelectItem value="M">Medium (M)</SelectItem>
-                      <SelectItem value="L">Large (L)</SelectItem>
-                      <SelectItem value="XL">Extra L (XL)</SelectItem>
-                      <SelectItem value="XXL">Double XL (XXL)</SelectItem>
-                      <SelectItem value="Free">Free Size</SelectItem>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="XS">XS</SelectItem>
+                      <SelectItem value="S">S</SelectItem>
+                      <SelectItem value="M">M</SelectItem>
+                      <SelectItem value="L">L</SelectItem>
+                      <SelectItem value="XL">XL</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
                   Color
@@ -182,10 +198,10 @@ export function ProductVariantDialog({
                   <Palette className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                   <Input
                     name="color"
-                    placeholder="Red, Blue..."
+                    placeholder="Red..."
                     value={formData.color}
                     onChange={handleInputChange}
-                    className="pl-10 h-10 border-slate-200 rounded-xl text-sm focus-visible:ring-pink-200"
+                    className="pl-10 h-10 border-slate-200 rounded-xl text-sm"
                   />
                 </div>
               </div>
@@ -199,14 +215,15 @@ export function ProductVariantDialog({
                 <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
                   name="remaining_stock"
+                  placeholder="Eg : 12"
                   type="number"
-                  placeholder="Quantity in hand"
                   value={formData.remaining_stock}
                   onChange={handleInputChange}
-                  className="pl-10 h-10 border-slate-200 text-sm rounded-xl focus-visible:ring-pink-200"
+                  className="pl-10 h-10 border-slate-200 text-xs rounded-xl"
                 />
               </div>
             </div>
+
             <div className="space-y-2">
               <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
                 Initial Price (MMK)
@@ -215,15 +232,12 @@ export function ProductVariantDialog({
                 <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
                   name="initial_price"
+                  placeholder="Eg : 17000"
                   type="number"
-                  placeholder="e.g. 45"
                   value={formData.initial_price}
                   onChange={handleInputChange}
-                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
+                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                  .000 Ks
-                </span>
               </div>
             </div>
 
@@ -235,41 +249,60 @@ export function ProductVariantDialog({
                 <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
                   name="price"
+                  placeholder="Eg : 12000"
                   type="number"
-                  placeholder="e.g. 45"
                   value={formData.price}
                   onChange={handleInputChange}
-                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
+                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                  .000 Ks
-                </span>
               </div>
             </div>
-
-            
 
             <div className="space-y-2">
               <Label className="text-[11px] uppercase font-bold text-slate-500 ml-1">
-                Wholesale Price (MMK)
+                Wholesale Pricing
               </Label>
-              <div className="relative">
-                <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <div className="flex gap-2">
                 <Input
-                  name="wholesale_price"
                   type="number"
-                  placeholder="e.g. 45"
-                  value={formData.wholesale_price}
-                  onChange={handleInputChange}
-                  className="pl-10 h-10 text-sm border-slate-200 rounded-xl focus-visible:ring-pink-200 font-medium"
+                  placeholder="Min Qty"
+                  value={tier.min_qty}
+                  onChange={(e) =>
+                    setTier((p) => ({ ...p, min_qty: e.target.value }))
+                  }
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                  .000 Ks
-                </span>
+                <Input
+                  type="number"
+                  placeholder="Price"
+                  value={tier.price}
+                  onChange={(e) =>
+                    setTier((p) => ({ ...p, price: e.target.value }))
+                  }
+                />
+                <Button type="button" onClick={addTier}>
+                  <Plus />
+                </Button>
+              </div>
+              <div className="space-y-1 mt-2">
+                {formData.wholesale_prices.map((t, i) => (
+                  <div
+                    key={i}
+                    className="flex justify-between text-xs bg-slate-50 p-2 rounded"
+                  >
+                    <span>
+                      {t.min_qty}+ → {t.price} MMK
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeTier(i)}
+                      className="text-red-500"
+                    >
+                      <Trash  className=" size-5"/>
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-
-          
           </div>
 
           <DialogFooter className="p-6 pt-2 bg-white">
@@ -277,14 +310,14 @@ export function ProductVariantDialog({
               type="button"
               variant="ghost"
               onClick={handleClose}
-              className=" h-11 rounded-xl text-slate-500 font-medium"
+              className="h-11 rounded-xl"
             >
               Close
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
-              className=" bg-main hover:bg-pink-600 text-white h-11 font-semibold rounded-xl shadow-lg shadow-slate-200 transition-all"
+              className="bg-main text-white h-11 text-xs! rounded-xl"
             >
               {isLoading ? (
                 <Loader2 className="animate-spin w-4 h-4" />

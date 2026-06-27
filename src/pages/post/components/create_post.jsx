@@ -153,26 +153,49 @@ function ProductForm() {
     setFormData((prev) => {
       const updatedVariants = [...prev.variants];
 
+      const normalized = {
+        ...variantData,
+        initial_stock: variantData.remaining_stock,
+        remaining_stock: variantData.remaining_stock,
+        wholesale_prices: variantData.wholesale_prices || [],
+      };
+
       if (dialogMode === "edit" && editingVariantIndex !== null) {
         updatedVariants[editingVariantIndex] = {
           ...updatedVariants[editingVariantIndex],
-          ...variantData,
-          initial_stock: updatedVariants[editingVariantIndex].initial_stock,
-          remaining_stock: variantData.remaining_stock,
-          initial_price: variantData.initial_price,
+          ...normalized,
         };
       } else {
-        updatedVariants.push({
-          ...variantData,
-          initial_stock: variantData.remaining_stock,
-          remaining_stock: variantData.remaining_stock,
-          initial_price: variantData.initial_price,
-        });
+        updatedVariants.push(normalized);
       }
 
       return { ...prev, variants: updatedVariants };
     });
+
     handleDialogClose();
+  };
+
+  const getVariantEffectivePrice = (variant, qty = 1) => {
+    if (!variant.wholesale_prices?.length) return variant.price || 0;
+
+    const sorted = [...variant.wholesale_prices].sort(
+      (a, b) => a.min_qty - b.min_qty
+    );
+
+    let price = variant.price;
+
+    for (const tier of sorted) {
+      if (qty >= tier.min_qty) {
+        price = tier.price;
+      }
+    }
+
+    return price;
+  };
+
+  const getVariantCost = (variant) => {
+    const stock = variant.initial_stock || variant.remaining_stock || 1;
+    return (formData.total_cost || 0) / stock;
   };
 
   const removeVariant = (index) => {
@@ -260,7 +283,7 @@ function ProductForm() {
   };
   return (
     <main className="flex-1 overflow-y-auto mt-14 md:mt-0 ">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className=" mx-auto space-y-6">
         <ProductVariantDialog
           isOpen={isOpen}
           type={dialogMode}
@@ -542,11 +565,22 @@ function ProductForm() {
                           {variant.price ? `${variant.price}K` : "—"}
                         </td>
                         <td className="px-4 py-3 text-right font-bold text-slate-900">
-                          {/* Profit calculation checks remaining_stock first */}
-                          {(variant?.remaining_stock ??
-                            variant?.initial_stock ??
-                            0) * (variant?.price || 0)}{" "}
-                          MMK
+                          {(() => {
+                            const stock =
+                              variant.remaining_stock ??
+                              variant.initial_stock ??
+                              0;
+
+                            const sellPrice = getVariantEffectivePrice(
+                              variant,
+                              1
+                            );
+                            const cost = getVariantCost(variant);
+
+                            const profit = (sellPrice - cost) * stock;
+
+                            return `${profit.toFixed(0)} MMK`;
+                          })()}
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">

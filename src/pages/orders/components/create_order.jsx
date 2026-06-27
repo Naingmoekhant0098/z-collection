@@ -126,6 +126,22 @@ function CreateOrEditOrder() {
     fetchOrderDetails();
   }, [id, isEditMode]);
 
+  const getEffectivePrice = (item, qty) => {
+    if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
+      return item.price;
+    }
+    const sorted = [...item.wholesale_prices].sort(
+      (a, b) => a.min_qty - b.min_qty
+    );
+    let finalPrice = item.price;
+    for (const tier of sorted) {
+      if (qty >= tier.min_qty) {
+        finalPrice = tier.price;
+      }
+    }
+    return finalPrice;
+  };
+
   const handleAddVariant = (variant) => {
     const exists = formData.items.find((i) => i.variant_id === variant._id);
     if (exists) return customToast.error("Already added to order");
@@ -145,9 +161,9 @@ function CreateOrEditOrder() {
           variant_id: variant._id,
           size: variant.size,
           color: variant.color,
-          initial_price : variant.initial_price,
+          initial_price: variant.initial_price,
           price: variant.price,
-          wholesale_price: variant.wholesale_price,
+          wholesale_prices: variant.wholesale_prices || [],
           quantity: 1,
           max_stock: maxStock,
         },
@@ -177,33 +193,29 @@ function CreateOrEditOrder() {
   const updateQty = (index, delta) => {
     const newItems = [...formData.items];
     const item = newItems[index];
-  
+
     const newQty = item.quantity + delta;
-  
+
     if (newQty <= 0) return;
-  
+
     if (newQty > item.max_stock) {
-      customToast.error(
-        "Stock Limit",
-        `Only ${item.max_stock} available`
-      );
+      customToast.error("Stock Limit", `Only ${item.max_stock} available`);
       return;
     }
+
     item.quantity = newQty;
-    item.price =
-      newQty >= 3
-        ? item.wholesale_price
-        : item.price;
+
+    item.price = getEffectivePrice(item, newQty);
 
     setFormData({
       ...formData,
       items: newItems,
     });
   };
-  const totalAmount = formData.items.reduce(
-    (sum, i) => sum + i.price * i.quantity,
-    0
-  );
+  const totalAmount = formData.items.reduce((sum, i) => {
+    const price = getEffectivePrice(i, i.quantity);
+    return sum + price * i.quantity;
+  }, 0);
 
   useEffect(() => {
     setFormData((prev) => ({ ...prev, total_amount: totalAmount }));
