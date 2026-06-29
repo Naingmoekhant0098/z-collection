@@ -126,40 +126,106 @@ function CreateOrEditOrder() {
     fetchOrderDetails();
   }, [id, isEditMode]);
 
-  const getEffectivePrice = (item, qty) => {
-    // Always use the persistent original_price as the starting point
-    const basePrice = item.price;
-    console.log("Bse price is", basePrice);
-
-    if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
-      return basePrice;
-    }
-
-    // Sort tiers so we can find the best deal
-    const sorted = [...item.wholesale_prices].sort(
-      (a, b) => b.min_qty - a.min_qty
-    );
-
-    // Find the first tier where qty meets the requirement
-    const matchedTier = sorted.find((tier) => qty >= tier.min_qty);
-    console.log(matchedTier);
-
-    // If match found, use it; if not, return the original base price
-    return matchedTier ? matchedTier.price : basePrice;
-  };
-
-  //   const getEffectivePrice = (item, qty) => {
-
-  //   const basePrice = item.price;
+  // const getEffectivePrice = (item, qty) => {
+  //   const basePrice = item.price;  
 
   //   if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
   //     return basePrice;
   //   }
-  //   const sorted = [...item.wholesale_prices].sort((a, b) => b.min_qty - a.min_qty);
-  //   const activeTier = sorted.find(tier => qty >= tier.min_qty);
-  //   return activeTier ? activeTier.price : basePrice;
+  //   const sorted = [...item.wholesale_prices].sort(
+  //     (a, b) => a.min_qty - b.min_qty
+  //   );
+
+  //   let finalPrice = basePrice;
+
+  //   for (const tier of sorted) {
+  //     if (qty >= tier.min_qty) {
+  //       console.log("Wholesle price");
+  //       finalPrice = tier.price;
+  //     } else {
+  //       finalPrice = item.price;
+  //       break;
+  //       console.log("manual price", basePrice);
+  //     }
+  //   }
+
+  //   return finalPrice;
   // };
 
+
+
+  const getEffectivePrice = (item, qty) => {
+    // IMPORTANT: Use the ORIGINAL price, not the current price
+    // The original price should NEVER change
+    const basePrice = item.original_price || item.initial_price || 0;
+
+    console.log("=== Calculating Price ===");
+    console.log("Quantity:", qty);
+    console.log("Base price (original):", basePrice);
+    console.log("Current item price:", item.price);
+    console.log("Wholesale tiers:", JSON.stringify(item.wholesale_prices, null, 2));
+
+    // If no wholesale prices or empty array, return base price
+    if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
+      console.log("No wholesale tiers, using base price:", basePrice);
+      return basePrice;
+    }
+
+    // Sort tiers by min_qty in DESCENDING order (highest first)
+    const sortedTiers = [...item.wholesale_prices].sort(
+      (a, b) => b.min_qty - a.min_qty
+    );
+
+    // Check from highest tier to lowest
+    for (const tier of sortedTiers) {
+      if (qty >= tier.min_qty) {
+        console.log(`✅ Quantity ${qty} qualifies for tier ${tier.min_qty}+, wholesale price: ${tier.price}`);
+        return tier.price; // Return immediately when we find the highest matching tier
+      } else {
+        console.log(`❌ Quantity ${qty} does NOT qualify for tier ${tier.min_qty}+`);
+      }
+    }
+
+    // If no tier matches, return the base price
+    console.log(`❌ No wholesale tier matches, using base price: ${basePrice}`);
+    return basePrice;
+};
+
+const updateQty = (index, delta) => {
+  const newItems = [...formData.items];
+  const item = newItems[index];
+
+  const newQty = item.quantity + delta;
+
+  if (newQty <= 0) return;
+
+  if (newQty > item.max_stock) {
+    customToast.error("Stock Limit", `Only ${item.max_stock} available`);
+    return;
+  }
+
+  // CRITICAL FIX: Store the original price if not already stored
+  // This should be done when the item is first loaded
+  if (!item.original_price && item.price) {
+    item.original_price = item.price;
+    console.log("📌 Stored original price:", item.original_price);
+  }
+
+  item.quantity = newQty;
+
+  const newPrice = getEffectivePrice(item, newQty);
+  item.price = newPrice;
+
+  console.log(`🔄 Updated: Qty=${newQty}, Price=${newPrice}`);
+  console.log("=========================");
+
+  setFormData({
+    ...formData,
+    items: newItems,
+  });
+};
+
+  
   const handleAddVariant = (variant) => {
     const exists = formData.items.find((i) => i.variant_id === variant._id);
     if (exists) return customToast.error("Already added to order");
@@ -190,45 +256,6 @@ function CreateOrEditOrder() {
     customToast.success("Added to list");
   };
 
-  // const updateQty = (index, delta) => {
-  //   const newItems = [...formData.items];
-  //   const targetItem = newItems[index];
-  //   const newQty = targetItem.quantity + delta;
-
-  //   if (delta > 0 && newQty > targetItem.max_stock) {
-  //     customToast.error(
-  //       "Stock Limit Reached",
-  //       `Only ${targetItem.max_stock} units available.`
-  //     );
-  //     return;
-  //   }
-
-  //   if (newQty > 0) {
-  //     newItems[index].quantity = newQty;
-  //     setFormData({ ...formData, items: newItems });
-  //   }
-  // };
-  const updateQty = (index, delta) => {
-    const newItems = [...formData.items];
-    const item = newItems[index];
-    const newQty = item.quantity + delta;
-
-    if (newQty <= 0) return;
-    if (newQty > item.max_stock) {
-      customToast.error("Stock Limit", `Only ${item.max_stock} available`);
-      return;
-    }
-
-    item.quantity = newQty;
-
-    // Calculate based on the static original_price,
-    // then update the dynamic display price
-
-    console.log(getEffectivePrice(item, newQty));
-    item.price = getEffectivePrice(item, newQty);
-
-    setFormData({ ...formData, items: newItems });
-  };
   const totalAmount = formData.items.reduce((sum, i) => {
     const price = getEffectivePrice(i, i.quantity);
     return sum + price * i.quantity;
@@ -267,9 +294,7 @@ function CreateOrEditOrder() {
         return;
       }
     }
-
     setIsLoading(true);
-
     try {
       const payload = {
         customer: {
