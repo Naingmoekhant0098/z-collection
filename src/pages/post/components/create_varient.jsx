@@ -181,6 +181,7 @@ export function ProductVariantDialog({
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
+                    <SelectItem value="Free">Free</SelectItem>
                       <SelectItem value="XS">XS</SelectItem>
                       <SelectItem value="S">S</SelectItem>
                       <SelectItem value="M">M</SelectItem>

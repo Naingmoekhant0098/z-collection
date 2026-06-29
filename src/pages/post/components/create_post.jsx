@@ -524,13 +524,9 @@ function ProductForm() {
                     <tr>
                       <th className="px-4 py-3">Size</th>
                       <th className="px-4 py-3">Color</th>
-                      <th className="px-4 py-3">
-                        Stock
-                      </th>
+                      <th className="px-4 py-3">Stock</th>
                       {/* Updates the table header visually depending on mode */}
-                      <th className="px-4 py-3">
-                        Stock (Remaining) 
-                      </th>
+                      <th className="px-4 py-3">Stock (Remaining)</th>
                       <th className="px-4 py-3 text-right">Sell Price</th>
                       <th className="px-4 py-3 text-center">Est. Profit</th>
                       <th className="px-4 py-3 text-center">Actions</th>
@@ -551,20 +547,14 @@ function ProductForm() {
                         <td className="px-4 py-3">
                           <span
                             className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                              (
-                                variant.initial_stock ??
-                                0) < 5
+                              (variant.initial_stock ?? 0) < 5
                                 ? "bg-red-50 text-red-600"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >
-                            {
-                              variant.initial_stock ??
-                              0}{" "}
-                            Stocks
+                            {variant.initial_stock ?? 0} Stocks
                           </span>
                         </td>
-
 
                         <td className="px-4 py-3">
                           <span
@@ -586,15 +576,18 @@ function ProductForm() {
                           {variant.price ? `${variant.price}K` : "—"}
                         </td>
                         <td className="px-4 py-3 text-right font-bold text-slate-900">
-  {(() => {
-    const stock = variant.remaining_stock ?? variant.initial_stock ?? 0;
-    // Use variant.price based on your previous dialog code
-    const price = variant.price || 0; 
-    const estProfit = stock * price;
+                          {(() => {
+                            const stock =
+                              variant.remaining_stock ??
+                              variant.initial_stock ??
+                              0;
+                            // Use variant.price based on your previous dialog code
+                            const price = variant.price || 0;
+                            const estProfit = stock * price;
 
-    return `${estProfit.toLocaleString()} MMK`;
-  })()}
-</td>
+                            return `${estProfit.toLocaleString()} MMK`;
+                          })()}
+                        </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button

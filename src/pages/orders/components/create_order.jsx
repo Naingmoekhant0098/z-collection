@@ -127,20 +127,38 @@ function CreateOrEditOrder() {
   }, [id, isEditMode]);
 
   const getEffectivePrice = (item, qty) => {
+    // Always use the persistent original_price as the starting point
+    const basePrice = item.price;
+    console.log("Bse price is", basePrice);
+
     if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
-      return item.price;
+      return basePrice;
     }
+
+    // Sort tiers so we can find the best deal
     const sorted = [...item.wholesale_prices].sort(
-      (a, b) => a.min_qty - b.min_qty
+      (a, b) => b.min_qty - a.min_qty
     );
-    let finalPrice = item.price;
-    for (const tier of sorted) {
-      if (qty >= tier.min_qty) {
-        finalPrice = tier.price;
-      }
-    }
-    return finalPrice;
+
+    // Find the first tier where qty meets the requirement
+    const matchedTier = sorted.find((tier) => qty >= tier.min_qty);
+    console.log(matchedTier);
+
+    // If match found, use it; if not, return the original base price
+    return matchedTier ? matchedTier.price : basePrice;
   };
+
+  //   const getEffectivePrice = (item, qty) => {
+
+  //   const basePrice = item.price;
+
+  //   if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
+  //     return basePrice;
+  //   }
+  //   const sorted = [...item.wholesale_prices].sort((a, b) => b.min_qty - a.min_qty);
+  //   const activeTier = sorted.find(tier => qty >= tier.min_qty);
+  //   return activeTier ? activeTier.price : basePrice;
+  // };
 
   const handleAddVariant = (variant) => {
     const exists = formData.items.find((i) => i.variant_id === variant._id);
@@ -193,11 +211,9 @@ function CreateOrEditOrder() {
   const updateQty = (index, delta) => {
     const newItems = [...formData.items];
     const item = newItems[index];
-
     const newQty = item.quantity + delta;
 
     if (newQty <= 0) return;
-
     if (newQty > item.max_stock) {
       customToast.error("Stock Limit", `Only ${item.max_stock} available`);
       return;
@@ -205,12 +221,13 @@ function CreateOrEditOrder() {
 
     item.quantity = newQty;
 
+    // Calculate based on the static original_price,
+    // then update the dynamic display price
+
+    console.log(getEffectivePrice(item, newQty));
     item.price = getEffectivePrice(item, newQty);
 
-    setFormData({
-      ...formData,
-      items: newItems,
-    });
+    setFormData({ ...formData, items: newItems });
   };
   const totalAmount = formData.items.reduce((sum, i) => {
     const price = getEffectivePrice(i, i.quantity);
@@ -241,8 +258,6 @@ function CreateOrEditOrder() {
       customToast.error("No Items", "Please add at least one product.");
       return;
     }
-
-    // Guardrail stock limit checks
     for (const item of formData.items) {
       if (item.quantity > item.max_stock) {
         customToast.error(
