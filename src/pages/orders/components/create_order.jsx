@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -89,6 +90,20 @@ function CreateOrEditOrder() {
         const res = await OrderService().getById(id);
         if (res?.data?.success) {
           const order = res.data.data;
+          const items = (order?.items || []).map((item) => ({
+            product_id: item.product_id,
+            name: item.name,
+            image: item.image,
+            variant_id: item.variant_id,
+            size: item.size,
+            color: item.color,
+            original_price: item.original_price || item.price,
+            price: item.price,
+            wholesale_prices: item.wholesale_prices || [],
+            quantity: item.quantity,
+            max_stock: item.max_stock || item.quantity + 20,
+          }));
+
           setFormData({
             name: order?.customer_id?.name || "",
             phone: order?.customer_id?.phone || "",
@@ -99,18 +114,7 @@ function CreateOrEditOrder() {
             payment_status: order?.payment_status || "unpaid",
             status: order?.status || "pending",
             royal_order_number: order?.royal_order_number || "",
-            items: (order?.items || []).map((item) => ({
-              product_id: item.product_id,
-              name: item.name,
-              image: item.image,
-              variant_id: item.variant_id,
-              size: item.size,
-              color: item.color,
-              price: item.price,
-              quantity: item.quantity,
-              // Fallback dynamically bounds stock constraint boundaries
-              max_stock: item.max_stock || item.quantity + 20,
-            })),
+            items: items,
           });
         } else {
           customToast.error("Error", "Could not load order information.");
@@ -126,44 +130,30 @@ function CreateOrEditOrder() {
     fetchOrderDetails();
   }, [id, isEditMode]);
 
-  // const getEffectivePrice = (item, qty) => {
-  //   const basePrice = item.price;  
+  // Helper function to get total quantity of the same product
+  const getTotalProductQuantity = (items, productId, excludeIndex = -1) => {
+    return items
+      .filter((item, index) => {
+        return String(item.product_id) === String(productId) && index !== excludeIndex;
+      })
+      .reduce((sum, item) => sum + (item.quantity || 0), 0);
+  };
 
-  //   if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
-  //     return basePrice;
-  //   }
-  //   const sorted = [...item.wholesale_prices].sort(
-  //     (a, b) => a.min_qty - b.min_qty
-  //   );
+  // Get effective price based on total product quantity
+  const getEffectivePrice = (item, qty, allItems = [], currentIndex = -1) => {
+    // Get the base price (original price)
+    const basePrice = item.original_price || item.price || item.price || 0;
 
-  //   let finalPrice = basePrice;
-
-  //   for (const tier of sorted) {
-  //     if (qty >= tier.min_qty) {
-  //       console.log("Wholesle price");
-  //       finalPrice = tier.price;
-  //     } else {
-  //       finalPrice = item.price;
-  //       break;
-  //       console.log("manual price", basePrice);
-  //     }
-  //   }
-
-  //   return finalPrice;
-  // };
-
-
-
-  const getEffectivePrice = (item, qty) => {
-    // IMPORTANT: Use the ORIGINAL price, not the current price
-    // The original price should NEVER change
-    const basePrice = item.original_price || item.initial_price || 0;
+    // Calculate total quantity for this product across all variants
+    const productId = item.product_id;
+    const totalQty = getTotalProductQuantity(allItems, productId, currentIndex) + (qty || 0);
 
     console.log("=== Calculating Price ===");
-    console.log("Quantity:", qty);
-    console.log("Base price (original):", basePrice);
-    console.log("Current item price:", item.price);
-    console.log("Wholesale tiers:", JSON.stringify(item.wholesale_prices, null, 2));
+    console.log("Product:", item.name);
+    console.log("Variant:", item.size, item.color);
+    console.log("Current variant quantity:", qty);
+    console.log("Total product quantity (all variants):", totalQty);
+    console.log("Base price:", basePrice);
 
     // If no wholesale prices or empty array, return base price
     if (!item.wholesale_prices || item.wholesale_prices.length === 0) {
@@ -176,56 +166,71 @@ function CreateOrEditOrder() {
       (a, b) => b.min_qty - a.min_qty
     );
 
-    // Check from highest tier to lowest
+    // Check from highest tier to lowest using TOTAL quantity
     for (const tier of sortedTiers) {
-      if (qty >= tier.min_qty) {
-        console.log(`✅ Quantity ${qty} qualifies for tier ${tier.min_qty}+, wholesale price: ${tier.price}`);
-        return tier.price; // Return immediately when we find the highest matching tier
+      if (totalQty >= tier.min_qty) {
+        console.log(`✅ Total quantity ${totalQty} qualifies for tier ${tier.min_qty}+, wholesale price: ${tier.price}`);
+        return tier.price;
       } else {
-        console.log(`❌ Quantity ${qty} does NOT qualify for tier ${tier.min_qty}+`);
+        console.log(`❌ Total quantity ${totalQty} does NOT qualify for tier ${tier.min_qty}+`);
       }
     }
 
     // If no tier matches, return the base price
     console.log(`❌ No wholesale tier matches, using base price: ${basePrice}`);
     return basePrice;
-};
+  };
 
-const updateQty = (index, delta) => {
-  const newItems = [...formData.items];
-  const item = newItems[index];
+  // Recalculate prices for all items of a specific product
+  const recalculateProductPrices = (items, productId) => {
+    return items.map((item, idx) => {
+      if (String(item.product_id) === String(productId)) {
+        const newPrice = getEffectivePrice(item, item.quantity, items, idx);
+        return {
+          ...item,
+          price: newPrice
+        };
+      }
+      return item;
+    });
+  };
 
-  const newQty = item.quantity + delta;
+  // Update quantity
+  const updateQty = (index, delta) => {
+    const newItems = [...formData.items];
+    const item = newItems[index];
 
-  if (newQty <= 0) return;
+    const newQty = item.quantity + delta;
 
-  if (newQty > item.max_stock) {
-    customToast.error("Stock Limit", `Only ${item.max_stock} available`);
-    return;
-  }
+    if (newQty <= 0) return;
 
-  // CRITICAL FIX: Store the original price if not already stored
-  // This should be done when the item is first loaded
-  if (!item.original_price && item.price) {
-    item.original_price = item.price;
-    console.log("📌 Stored original price:", item.original_price);
-  }
+    if (newQty > item.max_stock) {
+      customToast.error("Stock Limit", `Only ${item.max_stock} available`);
+      return;
+    }
 
-  item.quantity = newQty;
+    // Store original price if not already stored
+    if (!item.original_price && item.price) {
+      item.original_price = item.price;
+      console.log("📌 Stored original price:", item.original_price);
+    }
 
-  const newPrice = getEffectivePrice(item, newQty);
-  item.price = newPrice;
+    // Update quantity for this variant
+    item.quantity = newQty;
 
-  console.log(`🔄 Updated: Qty=${newQty}, Price=${newPrice}`);
-  console.log("=========================");
+    // Get the product ID
+    const productId = item.product_id;
 
-  setFormData({
-    ...formData,
-    items: newItems,
-  });
-};
+    // Recalculate prices for ALL variants of the same product
+    const updatedItems = recalculateProductPrices(newItems, productId);
 
-  
+    setFormData({
+      ...formData,
+      items: updatedItems,
+    });
+  };
+
+  // Add variant to order
   const handleAddVariant = (variant) => {
     const exists = formData.items.find((i) => i.variant_id === variant._id);
     if (exists) return customToast.error("Already added to order");
@@ -234,37 +239,83 @@ const updateQty = (index, delta) => {
     if (maxStock <= 0)
       return customToast.error("This variant is completely out of stock");
 
+    // Create new item with original price
+    const newItem = {
+      product_id: selectedProduct._id,
+      name: selectedProduct.name,
+      image: selectedProduct.image,
+      variant_id: variant._id,
+      size: variant.size,
+      color: variant.color,
+      original_price: variant.price || variant.price,
+      price: variant.price,
+      wholesale_prices: variant.wholesale_prices || [],
+      quantity: 1,
+      max_stock: maxStock,
+    };
+
+    // Add the new item to the list
+    const newItems = [...formData.items, newItem];
+
+    // Get the product ID
+    const productId = selectedProduct._id;
+
+    // Recalculate prices for ALL items of the same product
+    const updatedItems = recalculateProductPrices(newItems, productId);
+
     setFormData((prev) => ({
       ...prev,
-      items: [
-        ...prev.items,
-        {
-          product_id: selectedProduct._id,
-          name: selectedProduct.name,
-          image: selectedProduct.image,
-          variant_id: variant._id,
-          size: variant.size,
-          color: variant.color,
-          initial_price: variant.initial_price,
-          price: variant.price,
-          wholesale_prices: variant.wholesale_prices || [],
-          quantity: 1,
-          max_stock: maxStock,
-        },
-      ],
+      items: updatedItems,
     }));
+    
     customToast.success("Added to list");
   };
 
-  const totalAmount = formData.items.reduce((sum, i) => {
-    const price = getEffectivePrice(i, i.quantity);
+  // Remove item from order - FIXED
+  const removeItem = (index) => {
+    const itemToRemove = formData.items[index];
+    const productId = itemToRemove.product_id;
+    
+    // Remove the item
+    const newItems = formData.items.filter((_, i) => i !== index);
+    
+    // Check if there are any remaining items of this product
+    const hasRemainingItems = newItems.some(item => 
+      String(item.product_id) === String(productId)
+    );
+    
+    if (hasRemainingItems) {
+      // Recalculate prices for remaining items of the same product
+      const updatedItems = recalculateProductPrices(newItems, productId);
+      setFormData({
+        ...formData,
+        items: updatedItems,
+      });
+    } else {
+      // No remaining items of this product, just update the state
+      setFormData({
+        ...formData,
+        items: newItems,
+      });
+    }
+  };
+
+  // Calculate total amount
+  const totalAmount = formData.items.reduce((sum, i, idx) => {
+    const price = i.price || getEffectivePrice(i, i.quantity, formData.items, idx);
     return sum + price * i.quantity;
   }, 0);
 
+  // Update total amount when items change
   useEffect(() => {
-    setFormData((prev) => ({ ...prev, total_amount: totalAmount }));
-  }, [totalAmount]);
+    const total = formData.items.reduce((sum, i, idx) => {
+      const price = i.price || getEffectivePrice(i, i.quantity, formData.items, idx);
+      return sum + price * i.quantity;
+    }, 0);
+    setFormData((prev) => ({ ...prev, total_amount: total }));
+  }, [formData.items]);
 
+  // Save order
   const handleSaveOrder = async (e) => {
     e?.preventDefault?.();
 
@@ -315,7 +366,6 @@ const updateQty = (index, delta) => {
       if (isEditMode) {
         res = await OrderService().updateById(id, payload);
       } else {
-        // Standard create execution pipeline
         res = await OrderService().createTwo(payload);
       }
 
@@ -667,14 +717,7 @@ const updateQty = (index, delta) => {
 
                             <button
                               type="button"
-                              onClick={() =>
-                                setFormData({
-                                  ...formData,
-                                  items: formData.items.filter(
-                                    (_, i) => i !== index
-                                  ),
-                                })
-                              }
+                              onClick={() => removeItem(index)}
                               className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
